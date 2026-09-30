@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, Date, Enum, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, Column, Date, Enum, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -26,11 +26,31 @@ def _enum(enum_cls, name: str) -> Enum:
     )
 
 
-class Company(Base):
-    __tablename__ = "companies"
+class User(Base):
+    __tablename__ = "users"
+    __table_args__ = (UniqueConstraint("email", name="users_email_key"),)
 
     id = Column(String, primary_key=True, default=gen_uuid)
-    name = Column(String, unique=True, nullable=False)
+    email = Column(String(320), nullable=False)
+    full_name = Column(String, nullable=True)
+    password_hash = Column(String, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True, server_default="true")
+    created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
+
+
+def _owner_column():
+    # Nullable uniquement pour les données antérieures aux comptes : elles sont
+    # rattachées au premier compte créé. L'API renseigne toujours ce champ.
+    return Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+
+
+class Company(Base):
+    __tablename__ = "companies"
+    __table_args__ = (UniqueConstraint("owner_id", "name", name="uq_companies_owner_name"),)
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    owner_id = _owner_column()
+    name = Column(String, nullable=False)
 
     clients = relationship("Client", back_populates="company")
 
@@ -39,6 +59,7 @@ class Client(Base):
     __tablename__ = "clients"
 
     id = Column(String, primary_key=True, default=gen_uuid)
+    owner_id = _owner_column()
     company_id = Column(String, ForeignKey("companies.id"), nullable=False)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=True)  # optionnel
@@ -53,6 +74,7 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(String, primary_key=True, default=gen_uuid)
+    owner_id = _owner_column()
     client_id = Column(String, ForeignKey("clients.id"), nullable=False)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
