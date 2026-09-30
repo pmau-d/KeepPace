@@ -1,7 +1,19 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, Date, Enum, ForeignKey, Index, String, Text, UniqueConstraint, func
-from sqlalchemy.orm import relationship
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    Enum,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    select,
+)
+from sqlalchemy.orm import column_property, relationship
 
 from app.database import Base
 from app.enums import TaskPriority, TaskStatus
@@ -148,4 +160,13 @@ Index(
     unique=True,
     postgresql_where=Company.archived_at.is_(None),
     sqlite_where=Company.archived_at.is_(None),
+)
+
+# Nombre de commentaires, calculé par sous-requête : la liste des tâches
+# l'affiche sans charger les commentaires eux-mêmes.
+Task.comments_count = column_property(
+    select(func.count(TaskComment.id))
+    .where(TaskComment.task_id == Task.id)
+    .correlate_except(TaskComment)
+    .scalar_subquery()
 )
