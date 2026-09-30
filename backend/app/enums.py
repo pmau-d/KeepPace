@@ -22,3 +22,13 @@ class PresenceStatus(StrEnum):
     ABSENT = "ABSENT"
     SOON_BACK = "SOON_BACK"
     RECENTLY_BACK = "RECENTLY_BACK"
+
+
+class FollowUpReason(StrEnum):
+    """Pourquoi une tâche apparaît dans « À relancer aujourd'hui », par urgence."""
+
+    OVERDUE = "OVERDUE"  # échéance dépassée
+    DUE_TODAY = "DUE_TODAY"  # échéance aujourd'hui
+    CLIENT_LEAVING = "CLIENT_LEAVING"  # le client part bientôt : le joindre avant
+    CLIENT_BACK = "CLIENT_BACK"  # le client vient de rentrer
+    WAITING = "WAITING"  # en attente client sans nouvelle depuis plusieurs jours

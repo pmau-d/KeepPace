@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, Field, StringConstraints, model_validator
 
-from app.enums import PresenceStatus, TaskPriority, TaskStatus
+from app.enums import FollowUpReason, PresenceStatus, TaskPriority, TaskStatus
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 OptionalName = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None
@@ -178,3 +178,7 @@ class TaskPage(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class FollowUpItem(TaskSummary):
+    follow_up_reason: FollowUpReason
