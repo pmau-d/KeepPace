@@ -1,26 +1,38 @@
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div @click="$emit('close')" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="fixed inset-0 z-60 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-xs" @click="$emit('close')"></div>
 
       <div
         class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden"
         style="animation: modalIn 0.2s ease"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <div
+          class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700"
+        >
           <div>
             <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Modifier le client</h2>
-            <p class="text-xs text-slate-400 mt-0.5">{{ clientStore.fullName(client) }} · {{ client.company.name }}</p>
+            <p class="text-xs text-slate-400 mt-0.5">
+              {{ clientStore.fullName(client) }} · {{ client.company.name }}
+            </p>
           </div>
-          <button @click="$emit('close')" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400">
+          <button
+            class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"
+            @click="$emit('close')"
+          >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
 
-        <form @submit.prevent="submit" class="px-6 py-5 space-y-4">
+        <form class="px-6 py-5 space-y-4" @submit.prevent="submit">
           <!-- Company section -->
           <div class="bg-slate-50 dark:bg-slate-700/40 rounded-xl p-3 space-y-2">
             <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Entreprise</p>
@@ -34,14 +46,16 @@
               />
               <button
                 type="button"
-                @click="saveCompany"
                 :disabled="savingCompany || companyName === client.company.name"
                 class="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-lg transition-colors whitespace-nowrap"
+                @click="saveCompany"
               >
                 {{ savingCompany ? '…' : 'Renommer' }}
               </button>
             </div>
-            <p v-if="companySaved" class="text-xs text-green-600 dark:text-green-400">✓ Entreprise renommée</p>
+            <p v-if="companySaved" class="text-xs text-green-600 dark:text-green-400">
+              ✓ Entreprise renommée
+            </p>
           </div>
 
           <!-- First + Last name -->
@@ -94,8 +108,8 @@
             <button
               v-if="form.absence_end_date"
               type="button"
-              @click="form.absence_end_date = ''"
               class="mt-1 text-xs text-slate-400 hover:text-red-500 transition-colors"
+              @click="form.absence_end_date = ''"
             >
               ✕ Supprimer l'absence
             </button>
@@ -120,7 +134,7 @@
 import { ref, reactive } from 'vue'
 import { useClientStore } from '../stores/clientStore.js'
 
-const props = defineProps({ client: Object })
+const props = defineProps({ client: { type: Object, required: true } })
 const emit = defineEmits(['close', 'updated'])
 
 const clientStore = useClientStore()
@@ -144,7 +158,9 @@ async function saveCompany() {
   try {
     await clientStore.editCompany(props.client.company_id, companyName.value.trim())
     companySaved.value = true
-    setTimeout(() => { companySaved.value = false }, 2000)
+    setTimeout(() => {
+      companySaved.value = false
+    }, 2000)
   } catch {
     companyName.value = props.client.company.name
     error.value = "Ce nom d'entreprise existe déjà."
@@ -173,8 +189,13 @@ async function submit() {
 
 <style scoped>
 @keyframes modalIn {
-  from { transform: scale(0.95) translateY(8px); opacity: 0; }
-  to   { transform: scale(1) translateY(0);      opacity: 1; }
+  from {
+    transform: scale(0.95) translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 </style>
-

@@ -1,7 +1,7 @@
 <template>
-  <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+  <div class="fixed inset-0 z-60 flex items-center justify-center p-4">
     <!-- Backdrop -->
-    <div @click="$emit('close')" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-xs" @click="$emit('close')"></div>
 
     <!-- Modal -->
     <div
@@ -9,14 +9,16 @@
       style="animation: modalIn 0.2s ease"
     >
       <!-- Header -->
-      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+      <div
+        class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700"
+      >
         <div>
           <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Nouveau client</h2>
           <p class="text-xs text-slate-400 mt-0.5">Créez un client et son entreprise</p>
         </div>
         <button
-          @click="$emit('close')"
           class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 transition-colors"
+          @click="$emit('close')"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -25,7 +27,7 @@
       </div>
 
       <!-- Form -->
-      <form @submit.prevent="submit" class="px-6 py-5 space-y-4">
+      <form class="px-6 py-5 space-y-4" @submit.prevent="submit">
         <!-- Company autocomplete -->
         <div class="relative">
           <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -33,9 +35,6 @@
           </label>
           <input
             v-model="companySearch"
-            @input="onCompanyInput"
-            @focus="showCompanyDropdown = true"
-            @blur="closeCompanyDropdown"
             type="text"
             required
             :class="[
@@ -43,6 +42,9 @@
               form.company_id ? 'ring-2 ring-indigo-500' : 'focus:ring-2 focus:ring-indigo-500',
             ]"
             placeholder="Nom de l'entreprise"
+            @input="onCompanyInput"
+            @focus="showCompanyDropdown = true"
+            @blur="closeCompanyDropdown"
           />
 
           <div
@@ -52,15 +54,15 @@
             <div
               v-for="company in filteredCompanies"
               :key="company.id"
-              @mousedown.prevent="selectCompany(company)"
               class="px-3 py-2 text-sm text-slate-800 dark:text-slate-100 hover:bg-indigo-50 dark:hover:bg-slate-600 cursor-pointer"
+              @mousedown.prevent="selectCompany(company)"
             >
               {{ company.name }}
             </div>
             <div
               v-if="!form.company_id"
-              @mousedown.prevent="createAndSelectCompany"
               class="px-3 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-600 cursor-pointer border-t border-slate-200 dark:border-slate-600 font-medium flex items-center gap-1.5"
+              @mousedown.prevent="createAndSelectCompany"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -118,9 +120,7 @@
             type="date"
             class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
           />
-          <p class="text-xs text-slate-400 mt-1">
-            Laissez vide si le client est actuellement disponible.
-          </p>
+          <p class="text-xs text-slate-400 mt-1">Laissez vide si le client est actuellement disponible.</p>
         </div>
 
         <!-- Error -->
@@ -207,7 +207,7 @@ async function createAndSelectCompany() {
 
 async function submit() {
   if (!form.company_id) {
-    error.value = "Veuillez sélectionner ou créer une entreprise."
+    error.value = 'Veuillez sélectionner ou créer une entreprise.'
     return
   }
   submitting.value = true
@@ -223,7 +223,7 @@ async function submit() {
     const client = await clientStore.createClient(payload)
     emit('created', client)
   } catch {
-    error.value = "Erreur lors de la création du client. Veuillez réessayer."
+    error.value = 'Erreur lors de la création du client. Veuillez réessayer.'
   } finally {
     submitting.value = false
   }
@@ -232,8 +232,13 @@ async function submit() {
 
 <style scoped>
 @keyframes modalIn {
-  from { transform: scale(0.95) translateY(8px); opacity: 0; }
-  to   { transform: scale(1) translateY(0);      opacity: 1; }
+  from {
+    transform: scale(0.95) translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 </style>
-
