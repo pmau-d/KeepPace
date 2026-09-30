@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database import get_db
+
 from app import models, schemas
+from app.database import get_db
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -36,10 +37,14 @@ def update_company(company_id: str, data: schemas.CompanyCreate, db: Session = D
     company = db.query(models.Company).filter(models.Company.id == company_id).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
-    conflict = db.query(models.Company).filter(
-        models.Company.name == data.name,
-        models.Company.id != company_id,
-    ).first()
+    conflict = (
+        db.query(models.Company)
+        .filter(
+            models.Company.name == data.name,
+            models.Company.id != company_id,
+        )
+        .first()
+    )
     if conflict:
         raise HTTPException(status_code=400, detail="Company name already exists")
     company.name = data.name

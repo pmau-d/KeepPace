@@ -1,9 +1,9 @@
-from pydantic import BaseModel
-from typing import Optional, List
 from datetime import date, datetime
 
+from pydantic import BaseModel
 
 # ─── Company ────────────────────────────────────────────────────────────────
+
 
 class CompanyCreate(BaseModel):
     name: str
@@ -18,36 +18,38 @@ class CompanyRead(BaseModel):
 
 # ─── Client ─────────────────────────────────────────────────────────────────
 
+
 class ClientCreate(BaseModel):
     company_id: str
     first_name: str
-    last_name: Optional[str] = None   # optionnel — seuls prénom + entreprise sont requis
-    email: Optional[str] = None
-    absence_end_date: Optional[date] = None
+    last_name: str | None = None  # optionnel — seuls prénom + entreprise sont requis
+    email: str | None = None
+    absence_end_date: date | None = None
 
 
 class ClientUpdate(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    email: Optional[str] = None
-    absence_end_date: Optional[date] = None
-    company_id: Optional[str] = None
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str | None = None
+    absence_end_date: date | None = None
+    company_id: str | None = None
 
 
 class ClientRead(BaseModel):
     id: str
     company_id: str
     first_name: str
-    last_name: Optional[str] = None
-    email: Optional[str] = None
-    absence_end_date: Optional[date] = None
+    last_name: str | None = None
+    email: str | None = None
+    absence_end_date: date | None = None
     company: CompanyRead
-    presence_status: Optional[str] = None
+    presence_status: str | None = None
 
     model_config = {"from_attributes": True}
 
 
 # ─── TaskComment ──────────────────────────────────────────────────────────────
+
 
 class TaskCommentCreate(BaseModel):
     content: str
@@ -64,13 +66,14 @@ class TaskCommentRead(BaseModel):
 
 # ─── TaskLog ─────────────────────────────────────────────────────────────────
 
+
 class TaskLogRead(BaseModel):
     id: str
     task_id: str
     field_changed: str
-    old_value: Optional[str] = None
-    new_value: Optional[str] = None
-    comment: Optional[str] = None
+    old_value: str | None = None
+    new_value: str | None = None
+    comment: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -78,41 +81,41 @@ class TaskLogRead(BaseModel):
 
 # ─── Task ────────────────────────────────────────────────────────────────────
 
+
 class TaskCreate(BaseModel):
     client_id: str
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     status: str = "TODO"
-    sub_status: Optional[str] = None
+    sub_status: str | None = None
     priority: str = "MEDIUM"
-    due_date: Optional[date] = None
+    due_date: date | None = None
 
 
 class TaskUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    client_id: Optional[str] = None
-    status: Optional[str] = None
-    sub_status: Optional[str] = None
-    priority: Optional[str] = None
-    due_date: Optional[date] = None
-    comment: Optional[str] = None  # stored in log, not in task
+    title: str | None = None
+    description: str | None = None
+    client_id: str | None = None
+    status: str | None = None
+    sub_status: str | None = None
+    priority: str | None = None
+    due_date: date | None = None
+    comment: str | None = None  # stored in log, not in task
 
 
 class TaskRead(BaseModel):
     id: str
     client_id: str
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     status: str
-    sub_status: Optional[str] = None
+    sub_status: str | None = None
     priority: str
-    due_date: Optional[date] = None
+    due_date: date | None = None
     created_at: datetime
     updated_at: datetime
     client: ClientRead
-    logs: List[TaskLogRead] = []
-    comments: List[TaskCommentRead] = []
+    logs: list[TaskLogRead] = []
+    comments: list[TaskCommentRead] = []
 
     model_config = {"from_attributes": True}
-

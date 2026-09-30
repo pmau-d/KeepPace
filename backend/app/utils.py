@@ -33,4 +33,3 @@ def enrich_task(task):
     """Enrichit le client imbriqué dans une tâche."""
     enrich_client(task.client)
     return task
-
