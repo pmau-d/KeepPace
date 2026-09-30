@@ -1,0 +1,22 @@
+name: Proposer une fonctionnalité
+description: Une idée pour améliorer KeepPace.
+labels: ["amélioration"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Besoin
+      description: Quel problème cette fonctionnalité résoudrait-elle ?
+      placeholder: "Aujourd'hui, quand je…, je dois…"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution envisagée
+      description: Comment l'imaginez-vous ?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: D'autres solutions ou contournements envisagés.

@@ -1,7 +1,7 @@
 {
   "name": "keeppace-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -39,5 +39,7 @@
   },
   "engines": {
     "node": ">=20.19"
-  }
+  },
+  "description": "Frontend de KeepPace : suivi des tâches et des relances clients",
+  "license": "MIT"
 }
