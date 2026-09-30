@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import asc, case, nulls_last
-from sqlalchemy.orm import Session
+from sqlalchemy import asc, case, nulls_last, or_, select
+from sqlalchemy.orm import Session, joinedload
 
 from app import models, schemas
 from app.archive import archive_task, restore_task
@@ -23,49 +26,87 @@ PRIORITY_ORDER = case(
 )
 
 
-def _presence_status_filter(query, presence_status: PresenceStatus):
-    query = query.join(models.Client, models.Task.client_id == models.Client.id)
-    return query.filter(presence_status_expr(today()) == presence_status.value)
-
-
 def _log(task: models.Task, field: str, old, new, comment: str | None = None, **labels) -> models.TaskLog:
     return models.TaskLog(
         task_id=task.id, field_changed=field, old_value=old, new_value=new, comment=comment, **labels
     )
 
 
-@router.get("/", response_model=list[schemas.TaskRead])
-def list_tasks(
-    client_id: str | None = Query(None),
-    status: TaskStatus | None = Query(None),
-    show_done: bool = Query(False),
-    search: str | None = Query(None),
-    presence_status: PresenceStatus | None = Query(None),
-    archived: bool = Query(False),
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user),
-):
-    query = owned(db, models.Task, user, archived=archived)
-    if client_id:
-        query = query.filter(models.Task.client_id == client_id)
-    if status:
-        query = query.filter(models.Task.status == status)
-    if not show_done:
-        query = query.filter(models.Task.status != TaskStatus.DONE)
-    if search:
-        query = query.filter(models.Task.title.ilike(f"%{search}%"))
-    if presence_status:
-        query = _presence_status_filter(query, presence_status)
+def _escape_like(term: str) -> str:
+    return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
-    tasks = query.order_by(
+
+@dataclass
+class TaskFilters:
+    """Filtres communs à la liste et à l'export CSV."""
+
+    client_id: Annotated[str | None, Query()] = None
+    status: Annotated[TaskStatus | None, Query()] = None
+    show_done: Annotated[bool, Query()] = False
+    search: Annotated[str | None, Query(max_length=200, description="Titre, description et commentaires")] = (
+        None
+    )
+    presence_status: Annotated[PresenceStatus | None, Query()] = None
+    archived: Annotated[bool, Query()] = False
+
+    def apply(self, query):
+        if self.client_id:
+            query = query.filter(models.Task.client_id == self.client_id)
+        if self.status:
+            query = query.filter(models.Task.status == self.status)
+        if not self.show_done and self.status != TaskStatus.DONE:
+            query = query.filter(models.Task.status != TaskStatus.DONE)
+        if self.search and self.search.strip():
+            pattern = f"%{_escape_like(self.search.strip())}%"
+            in_comments = (
+                select(models.TaskComment.id)
+                .where(models.TaskComment.task_id == models.Task.id)
+                .where(models.TaskComment.content.ilike(pattern, escape="\\"))
+                .exists()
+            )
+            query = query.filter(
+                or_(
+                    models.Task.title.ilike(pattern, escape="\\"),
+                    models.Task.description.ilike(pattern, escape="\\"),
+                    in_comments,
+                )
+            )
+        if self.presence_status:
+            query = query.join(models.Client, models.Task.client_id == models.Client.id).filter(
+                presence_status_expr(today()) == self.presence_status.value
+            )
+        return query
+
+
+def _filtered_tasks(db: Session, user: models.User, filters: TaskFilters):
+    query = filters.apply(owned(db, models.Task, user, archived=filters.archived))
+    return query.options(joinedload(models.Task.client).joinedload(models.Client.company))
+
+
+def _ordered(query):
+    return query.order_by(
         # 1. Tâches avec date d'abord (NULL en dernier)
         nulls_last(asc(models.Task.due_date)),
         # 2. Priorité HIGH → MEDIUM → LOW
         asc(PRIORITY_ORDER),
-        # 3. À égalité : plus récente d'abord
+        # 3. À égalité : plus récente d'abord, puis id pour une pagination stable
         models.Task.created_at.desc(),
-    ).all()
-    return enrich_tasks(db, tasks)
+        models.Task.id,
+    )
+
+
+@router.get("/", response_model=schemas.TaskPage)
+def list_tasks(
+    filters: TaskFilters = Depends(),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    query = _filtered_tasks(db, user, filters)
+    total = query.order_by(None).count()
+    tasks = _ordered(query).limit(limit).offset(offset).all()
+    return {"items": enrich_tasks(db, tasks), "total": total, "limit": limit, "offset": offset}
 
 
 @router.post("/", response_model=schemas.TaskRead, status_code=201)

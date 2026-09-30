@@ -32,8 +32,8 @@ def test_task_lifecycle_is_logged(client):
     assert [log["new_value"] for log in logs] == ["TODO", "IN_PROGRESS", "DONE"]
     assert logs[1]["comment"] == "démarré"
 
-    assert client.get("/tasks/").json() == []
-    assert len(client.get("/tasks/", params={"show_done": True}).json()) == 1
+    assert client.get("/tasks/").json()["items"] == []
+    assert len(client.get("/tasks/", params={"show_done": True}).json()["items"]) == 1
 
 
 def test_presence_status(client):
@@ -63,7 +63,7 @@ def test_presence_status(client):
 
     # Le filtre SQL et le statut renvoyé viennent de la même règle
     for expected in {e for _, e in cases}:
-        filtered = client.get("/tasks/", params={"presence_status": expected}).json()
+        filtered = client.get("/tasks/", params={"presence_status": expected}).json()["items"]
         assert filtered and {t["client"]["presence_status"] for t in filtered} == {expected}
 
 
@@ -106,15 +106,15 @@ def test_deleting_a_task_archives_it_and_keeps_history(client):
     task = client.post("/tasks/", json={"client_id": customer["id"], "title": "Relancer"}).json()
     assert client.delete(f"/tasks/{task['id']}").status_code == 204
 
-    assert client.get("/tasks/").json() == []
+    assert client.get("/tasks/").json()["items"] == []
     assert client.get(f"/tasks/{task['id']}").status_code == 404
-    assert [t["id"] for t in client.get("/tasks/", params={"archived": True}).json()] == [task["id"]]
+    assert [t["id"] for t in client.get("/tasks/", params={"archived": True}).json()["items"]] == [task["id"]]
     logs = client.get(f"/tasks/{task['id']}/logs").json()
     assert logs[-1]["field_changed"] == "archived"
 
     restored = client.post(f"/tasks/{task['id']}/restore")
     assert restored.status_code == 200
-    assert [t["id"] for t in client.get("/tasks/").json()] == [task["id"]]
+    assert [t["id"] for t in client.get("/tasks/").json()["items"]] == [task["id"]]
 
 
 def test_archiving_a_company_cascades_and_restores_only_what_it_archived(client):
@@ -127,12 +127,12 @@ def test_archiving_a_company_cascades_and_restores_only_what_it_archived(client)
 
     assert client.delete(f"/companies/{alice['company_id']}").status_code == 204
     assert client.get("/clients/").json() == []
-    assert client.get("/tasks/").json() == []
+    assert client.get("/tasks/").json()["items"] == []
     assert client.post(f"/clients/{alice['id']}/restore").status_code == 409
 
     assert client.post(f"/companies/{alice['company_id']}/restore").status_code == 200
     assert [c["first_name"] for c in client.get("/clients/").json()] == ["Alice"]
-    assert [t["id"] for t in client.get("/tasks/").json()] == [kept["id"]]
+    assert [t["id"] for t in client.get("/tasks/").json()["items"]] == [kept["id"]]
 
 
 def test_archived_company_name_can_be_reused(client):
@@ -158,3 +158,44 @@ def test_deleted_comment_is_kept_in_history(client):
     client.delete(f"/tasks/{task['id']}/comments/{comment['id']}")
     log = client.get(f"/tasks/{task['id']}/logs").json()[-1]
     assert (log["field_changed"], log["old_value"]) == ("comment", "Appel du 12")
+
+
+def test_list_is_paginated_and_light(client):
+    customer = make_client(client)
+    for i in range(5):
+        client.post(
+            "/tasks/", json={"client_id": customer["id"], "title": f"t{i}", "due_date": f"2026-10-0{i + 1}"}
+        )
+    page = client.get("/tasks/", params={"limit": 2, "offset": 2}).json()
+    assert (page["total"], page["limit"], page["offset"]) == (5, 2, 2)
+    assert [t["title"] for t in page["items"]] == ["t2", "t3"]
+    assert "comments" not in page["items"][0] and "logs" not in page["items"][0]
+    assert client.get("/tasks/", params={"limit": 500}).status_code == 422
+
+
+def test_detail_includes_comments_and_list_counts_them(client):
+    customer = make_client(client)
+    task = client.post("/tasks/", json={"client_id": customer["id"], "title": "x"}).json()
+    client.post(f"/tasks/{task['id']}/comments", json={"content": "Premier"})
+    client.post(f"/tasks/{task['id']}/comments", json={"content": "Second"})
+    assert client.get("/tasks/").json()["items"][0]["comments_count"] == 2
+    assert [c["content"] for c in client.get(f"/tasks/{task['id']}").json()["comments"]] == [
+        "Premier",
+        "Second",
+    ]
+
+
+def test_search_covers_title_description_and_comments(client):
+    customer = make_client(client)
+    by_title = client.post("/tasks/", json={"client_id": customer["id"], "title": "Contrat Acme"}).json()
+    by_desc = client.post(
+        "/tasks/", json={"client_id": customer["id"], "title": "Autre", "description": "revoir le CONTRAT"}
+    ).json()
+    by_comment = client.post("/tasks/", json={"client_id": customer["id"], "title": "Encore"}).json()
+    client.post(f"/tasks/{by_comment['id']}/comments", json={"content": "contrat signé ?"})
+    client.post("/tasks/", json={"client_id": customer["id"], "title": "Sans rapport"})
+
+    found = {t["id"] for t in client.get("/tasks/", params={"search": "contrat"}).json()["items"]}
+    assert found == {by_title["id"], by_desc["id"], by_comment["id"]}
+    # Les jokers SQL saisis par l'utilisateur sont pris littéralement
+    assert client.get("/tasks/", params={"search": "%"}).json()["total"] == 0

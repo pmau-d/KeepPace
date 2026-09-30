@@ -84,7 +84,7 @@ def test_users_are_isolated(client, other_client):
     customer = client.post("/clients/", json={"company_id": company["id"], "first_name": "Alice"}).json()
     task = client.post("/tasks/", json={"client_id": customer["id"], "title": "Secret"}).json()
 
-    assert other_client.get("/tasks/").json() == []
+    assert other_client.get("/tasks/").json()["items"] == []
     assert other_client.get("/clients/").json() == []
     assert other_client.get("/companies/").json() == []
     assert other_client.get(f"/tasks/{task['id']}").status_code == 404
