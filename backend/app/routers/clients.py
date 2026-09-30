@@ -5,8 +5,8 @@ from app import models, schemas
 from app.archive import archive_client, restore_client
 from app.database import get_db
 from app.deps import get_current_user
+from app.presence import enrich_client, enrich_clients
 from app.repository import get_client, get_company, owned
-from app.utils import enrich_client
 
 router = APIRouter(prefix="/clients", tags=["clients"])
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/clients", tags=["clients"])
 def get_clients(
     archived: bool = False, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
 ):
-    return [enrich_client(c) for c in owned(db, models.Client, user, archived=archived).all()]
+    return enrich_clients(db, owned(db, models.Client, user, archived=archived).all())
 
 
 @router.post("/", response_model=schemas.ClientRead, status_code=201)
@@ -27,12 +27,12 @@ def create_client(
     db.add(client)
     db.commit()
     db.refresh(client)
-    return enrich_client(client)
+    return enrich_client(db, client)
 
 
 @router.get("/{client_id}", response_model=schemas.ClientRead)
 def read_client(client_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    return enrich_client(get_client(db, client_id, user))
+    return enrich_client(db, get_client(db, client_id, user))
 
 
 @router.put("/{client_id}", response_model=schemas.ClientRead)
@@ -48,9 +48,13 @@ def update_client(
         get_company(db, changes["company_id"], user)
     for field, value in changes.items():
         setattr(client, field, value)
+    # Mise à jour partielle : on revalide la période complète (début ≤ fin).
+    start, end = client.absence_start_date, client.absence_end_date
+    if start and end and end < start:
+        raise HTTPException(status_code=422, detail="La fin d'absence doit suivre son début")
     db.commit()
     db.refresh(client)
-    return enrich_client(client)
+    return enrich_client(db, client)
 
 
 @router.delete("/{client_id}", status_code=204)
@@ -70,4 +74,4 @@ def restore(client_id: str, db: Session = Depends(get_db), user: models.User = D
     restore_client(db, client)
     db.commit()
     db.refresh(client)
-    return enrich_client(client)
+    return enrich_client(db, client)

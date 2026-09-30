@@ -69,6 +69,7 @@ class Client(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=True)  # optionnel
     email = Column(String, nullable=True)
+    absence_start_date = Column(Date, nullable=True)
     absence_end_date = Column(Date, nullable=True)
 
     archived_at = _archived_column()

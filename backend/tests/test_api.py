@@ -1,4 +1,6 @@
-from datetime import date, timedelta
+from datetime import timedelta
+
+from app.presence import today
 
 
 def make_client(api, company="Acme", first_name="Alice", **extra):
@@ -35,21 +37,47 @@ def test_task_lifecycle_is_logged(client):
 
 
 def test_presence_status(client):
-    today = date.today()
-    cases = {
-        None: "PRESENT",
-        today + timedelta(days=10): "ABSENT",
-        today + timedelta(days=2): "SOON_BACK",
-        today - timedelta(days=2): "RECENTLY_BACK",
-        today - timedelta(days=30): "PRESENT",
-    }
-    for index, (end, expected) in enumerate(cases.items()):
-        extra = {"absence_end_date": end.isoformat()} if end else {}
-        customer = make_client(client, company=f"C{index}", **extra)
-        assert customer["presence_status"] == expected
+    on = today()
+
+    def d(days):
+        return (on + timedelta(days=days)).isoformat()
+
+    cases = [
+        ({}, "PRESENT"),
+        ({"absence_end_date": d(10)}, "ABSENT"),
+        ({"absence_end_date": d(3)}, "SOON_BACK"),
+        ({"absence_end_date": d(0)}, "SOON_BACK"),
+        ({"absence_end_date": d(-1)}, "RECENTLY_BACK"),
+        ({"absence_end_date": d(-5)}, "RECENTLY_BACK"),
+        ({"absence_end_date": d(-6)}, "PRESENT"),
+        # Avec une date de début
+        ({"absence_start_date": d(2), "absence_end_date": d(20)}, "LEAVING_SOON"),
+        ({"absence_start_date": d(10), "absence_end_date": d(20)}, "PRESENT"),
+        ({"absence_start_date": d(-2), "absence_end_date": d(20)}, "ABSENT"),
+        ({"absence_start_date": d(-2)}, "ABSENT"),  # retour non daté
+    ]
+    for index, (period, expected) in enumerate(cases):
+        customer = make_client(client, company=f"C{index}", **period)
+        assert customer["presence_status"] == expected, (period, customer["presence_status"])
         client.post("/tasks/", json={"client_id": customer["id"], "title": f"t{index}"})
+
+    # Le filtre SQL et le statut renvoyé viennent de la même règle
+    for expected in {e for _, e in cases}:
         filtered = client.get("/tasks/", params={"presence_status": expected}).json()
-        assert customer["id"] in {t["client"]["id"] for t in filtered}
+        assert filtered and {t["client"]["presence_status"] for t in filtered} == {expected}
+
+
+def test_absence_end_must_follow_start(client):
+    company_id = client.post("/companies/", json={"name": "Acme"}).json()["id"]
+    bad = {
+        "company_id": company_id,
+        "first_name": "A",
+        "absence_start_date": "2026-10-10",
+        "absence_end_date": "2026-10-01",
+    }
+    assert client.post("/clients/", json=bad).status_code == 422
+    ok = make_client(client, company="Globex", absence_start_date="2026-10-10")
+    assert client.put(f"/clients/{ok['id']}", json={"absence_end_date": "2026-10-01"}).status_code == 422
 
 
 def test_comments(client):

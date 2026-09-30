@@ -1,6 +1,9 @@
 import os
 
-os.environ.update(DATABASE_URL="sqlite://", ENVIRONMENT="test", COOKIE_SECURE="false")
+# SQLite en mémoire par défaut ; TEST_DATABASE_URL permet de viser PostgreSQL (CI).
+os.environ.update(
+    DATABASE_URL=os.environ.get("TEST_DATABASE_URL", "sqlite://"), ENVIRONMENT="test", COOKIE_SECURE="false"
+)
 
 import pytest
 from fastapi.testclient import TestClient
