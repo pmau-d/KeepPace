@@ -19,7 +19,7 @@ COPY . .
 RUN npm run build
 
 # ─── Production ─────────────────────────────────────────────────────────────
-FROM nginx:1.29-alpine AS prod
+FROM nginx:1.31-alpine AS prod
 # Modèle traité par l'image nginx au démarrage (variable BACKEND_URL)
 ENV BACKEND_URL=backend:8000
 COPY nginx.conf /etc/nginx/templates/default.conf.template
