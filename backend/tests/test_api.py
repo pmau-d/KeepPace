@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from app.presence import today
+from app.types import utcnow
 
 
 def make_client(api, company="Acme", first_name="Alice", **extra):
@@ -199,3 +200,81 @@ def test_search_covers_title_description_and_comments(client):
     assert found == {by_title["id"], by_desc["id"], by_comment["id"]}
     # Les jokers SQL saisis par l'utilisateur sont pris littéralement
     assert client.get("/tasks/", params={"search": "%"}).json()["total"] == 0
+
+
+def test_follow_up_lists_what_to_chase_today_in_order(client):
+    on = today()
+
+    def d(days):
+        return (on + timedelta(days=days)).isoformat()
+
+    present = make_client(client, company="P", first_name="Paul")
+    back = make_client(client, company="B", first_name="Rita", absence_end_date=d(-2))
+    leaving = make_client(client, company="L", first_name="Léo", absence_start_date=d(1))
+    away = make_client(client, company="A", first_name="Ana", absence_end_date=d(10))
+
+    def task(customer, title, **extra):
+        return client.post("/tasks/", json={"client_id": customer["id"], "title": title, **extra}).json()
+
+    task(present, "En retard", due_date=d(-1))
+    task(present, "Aujourd'hui", due_date=d(0))
+    task(leaving, "Avant son départ")
+    task(back, "Depuis son retour", due_date=d(30))
+    task(away, "Client absent", due_date=d(-3))  # injoignable : exclu
+    task(present, "Plus tard", due_date=d(5))  # rien d'urgent : exclu
+    done = task(present, "Déjà faite", due_date=d(-1))
+    client.post(f"/tasks/{done['id']}/close")
+
+    items = client.get("/tasks/follow-up").json()
+    assert [(t["title"], t["follow_up_reason"]) for t in items] == [
+        ("En retard", "OVERDUE"),
+        ("Aujourd'hui", "DUE_TODAY"),
+        ("Avant son départ", "CLIENT_LEAVING"),
+        ("Depuis son retour", "CLIENT_BACK"),
+    ]
+
+
+def test_csv_export(client):
+    customer = make_client(client, company="Acme", first_name="Alice", last_name="Martin")
+    client.post(
+        "/tasks/",
+        json={
+            "client_id": customer["id"],
+            "title": "=HYPERLINK(1)",
+            "priority": "HIGH",
+            "due_date": "2026-10-15",
+        },
+    )
+    client.post("/tasks/", json={"client_id": customer["id"], "title": "Autre"})
+
+    response = client.get("/tasks/export.csv", params={"search": "HYPERLINK"})
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert "attachment" in response.headers["content-disposition"]
+    lines = response.content.decode("utf-8-sig").splitlines()
+    assert lines[0].startswith("Titre;Client;Entreprise;Statut")
+    assert len(lines) == 2
+    # Les formules sont neutralisées (injection CSV)
+    assert lines[1].startswith("'=HYPERLINK(1);Alice Martin;Acme;À faire;;Haute;15/10/2026;Présent;0;")
+
+
+def test_follow_up_includes_stale_waiting_tasks(client):
+    from sqlalchemy import bindparam, text
+
+    from app.database import engine
+    from app.types import UTCDateTime
+
+    customer = make_client(client)
+    stale = client.post(
+        "/tasks/", json={"client_id": customer["id"], "title": "Relance", "status": "BLOCKED"}
+    ).json()
+    client.post("/tasks/", json={"client_id": customer["id"], "title": "Récente", "status": "BLOCKED"})
+    with engine.begin() as conn:
+        conn.execute(
+            text("UPDATE tasks SET updated_at = :at WHERE id = :id").bindparams(
+                bindparam("at", type_=UTCDateTime)
+            ),
+            {"at": utcnow() - timedelta(days=4), "id": stale["id"]},
+        )
+    items = client.get("/tasks/follow-up").json()
+    assert [(t["title"], t["follow_up_reason"]) for t in items] == [("Relance", "WAITING")]
