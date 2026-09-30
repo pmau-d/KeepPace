@@ -2,10 +2,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from app import models  # noqa: F401 — enregistre les modèles dans Base.metadata
 from app.config import settings
-from app.database import wait_for_db
+from app.database import engine, wait_for_db
 from app.routers import auth, clients, companies, tasks
 
 
@@ -16,7 +18,15 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="KeepPace API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="KeepPace API",
+    version="1.0.0",
+    lifespan=lifespan,
+    # Documentation interactive désactivée en production.
+    docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
+    redoc_url=None,
+    openapi_url=None if settings.ENVIRONMENT == "production" else "/openapi.json",
+)
 
 if settings.cors_origins:
     app.add_middleware(
@@ -35,4 +45,15 @@ app.include_router(tasks.router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to KeepPace API 🚀", "docs": "/docs"}
+    return {"name": "KeepPace API", "version": app.version}
+
+
+@app.get("/health", tags=["monitoring"])
+def health():
+    """Sonde de disponibilité : l'API répond et la base de données aussi."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+    except Exception:
+        return JSONResponse(status_code=503, content={"status": "unavailable"})
+    return {"status": "ok"}

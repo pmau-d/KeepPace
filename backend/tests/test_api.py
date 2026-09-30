@@ -278,3 +278,7 @@ def test_follow_up_includes_stale_waiting_tasks(client):
         )
     items = client.get("/tasks/follow-up").json()
     assert [(t["title"], t["follow_up_reason"]) for t in items] == [("Relance", "WAITING")]
+
+
+def test_health(anon):
+    assert anon.get("/health").json() == {"status": "ok"}
