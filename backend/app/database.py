@@ -1,3 +1,4 @@
+import logging
 import time
 
 from sqlalchemy import create_engine, text
@@ -17,6 +18,7 @@ def build_engine(url: str):
 engine = build_engine(settings.sqlalchemy_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+logger = logging.getLogger(__name__)
 
 
 def get_db():
@@ -32,9 +34,8 @@ def wait_for_db(max_retries: int = 15, delay: int = 2):
         try:
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-            print("✅ Database is ready!")
             return
-        except Exception as e:
-            print(f"⏳ Waiting for database... ({attempt + 1}/{max_retries}): {e}")
+        except Exception as exc:
+            logger.warning("Base de données indisponible (%s/%s) : %s", attempt + 1, max_retries, exc)
             time.sleep(delay)
     raise RuntimeError("Could not connect to the database after several retries.")

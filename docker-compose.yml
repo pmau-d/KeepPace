@@ -27,7 +27,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      target: dev
     container_name: keeppace_backend
     restart: unless-stopped
     volumes:
@@ -48,7 +48,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      target: dev
     container_name: keeppace_frontend
     restart: unless-stopped
     volumes:
