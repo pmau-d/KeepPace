@@ -58,9 +58,7 @@ export const useClientStore = defineStore('clients', () => {
     const idx = companies.value.findIndex((c) => c.id === id)
     if (idx !== -1) companies.value[idx] = res.data
     // Rafraîchir les clients (leur company.name est embarqué)
-    clients.value = clients.value.map((c) =>
-      c.company_id === id ? { ...c, company: res.data } : c,
-    )
+    clients.value = clients.value.map((c) => (c.company_id === id ? { ...c, company: res.data } : c))
     return res.data
   }
 
@@ -101,12 +99,20 @@ export const useClientStore = defineStore('clients', () => {
   }
 
   return {
-    clients, companies, loading,
-    fetchClients, fetchCompanies,
-    createCompany, createClient,
-    updateClient, editCompany,
-    deleteClient, deleteCompany, resetAll,
-    presenceColor, presenceLabel, fullName,
+    clients,
+    companies,
+    loading,
+    fetchClients,
+    fetchCompanies,
+    createCompany,
+    createClient,
+    updateClient,
+    editCompany,
+    deleteClient,
+    deleteCompany,
+    resetAll,
+    presenceColor,
+    presenceLabel,
+    fullName,
   }
 })
-

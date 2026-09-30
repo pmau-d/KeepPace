@@ -1,6 +1,6 @@
 <template>
   <header
-    class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-5 py-3 flex items-center gap-3 flex-wrap flex-shrink-0"
+    class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-5 py-3 flex items-center gap-3 flex-wrap shrink-0"
   >
     <!-- Global search -->
     <div class="relative flex-1 min-w-48">
@@ -19,18 +19,18 @@
       </svg>
       <input
         v-model="searchQuery"
-        @input="handleSearch"
         type="text"
         placeholder="Rechercher une tâche..."
         class="w-full pl-9 pr-3 py-2 text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg focus:ring-2 focus:ring-indigo-500 placeholder-slate-400 transition"
+        @input="handleSearch"
       />
     </div>
 
     <!-- Status filter -->
     <select
       v-model="statusFilter"
-      @change="handleStatusFilter"
       class="text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+      @change="handleStatusFilter"
     >
       <option value="">Tous les statuts</option>
       <option value="TODO">À faire</option>
@@ -41,8 +41,8 @@
     <!-- Presence status filter -->
     <select
       v-model="presenceFilter"
-      @change="handlePresenceFilter"
       class="text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+      @change="handlePresenceFilter"
     >
       <option value="">Toutes les présences</option>
       <option value="PRESENT">🟢 Présent</option>
@@ -52,20 +52,22 @@
     </select>
 
     <!-- Show done toggle -->
-    <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+    <label
+      class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer select-none"
+    >
       <button
         type="button"
-        @click="toggleShowDone"
         :class="[
-          'relative w-10 h-5 rounded-full transition-colors flex-shrink-0',
+          'relative w-10 h-5 rounded-full transition-colors shrink-0',
           taskStore.filters.showDone ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600',
         ]"
         role="switch"
         :aria-checked="taskStore.filters.showDone"
+        @click="toggleShowDone"
       >
         <span
           :class="[
-            'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200',
+            'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200',
             taskStore.filters.showDone ? 'translate-x-5' : 'translate-x-0.5',
           ]"
         ></span>
@@ -75,9 +77,9 @@
 
     <!-- Dark mode toggle -->
     <button
-      @click="$emit('toggle-dark')"
       class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
       :title="isDark ? 'Mode clair' : 'Mode sombre'"
+      @click="$emit('toggle-dark')"
     >
       <!-- Sun -->
       <svg v-if="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,8 +103,8 @@
 
     <!-- New task button -->
     <button
+      class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors shadow-xs"
       @click="$emit('open-create')"
-      class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors shadow-sm"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
@@ -146,6 +148,3 @@ function toggleShowDone() {
   taskStore.setFilter('showDone', !taskStore.filters.showDone)
 }
 </script>
-
-
-

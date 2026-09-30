@@ -1,7 +1,8 @@
 <template>
   <div :class="isDark ? 'dark' : ''">
-    <div class="flex h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-hidden">
-
+    <div
+      class="flex h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-hidden"
+    >
       <!-- Sidebar -->
       <Sidebar />
 
@@ -12,14 +13,17 @@
       </div>
 
       <!-- Slide-over panel -->
-      <TaskSlideOver v-if="taskStore.selectedTask" @close="taskStore.closeSlideOver()" @duplicate="openDuplicate" />
+      <TaskSlideOver
+        v-if="taskStore.selectedTask"
+        @close="taskStore.closeSlideOver()"
+        @duplicate="openDuplicate"
+      />
 
       <!-- Create task modal -->
       <CreateTaskModal v-if="showCreateModal" @close="showCreateModal = false" />
 
       <!-- Duplicate task modal -->
       <CreateTaskModal v-if="duplicateSource" :prefill="duplicateSource" @close="duplicateSource = null" />
-
     </div>
   </div>
 </template>
@@ -51,11 +55,6 @@ function toggleDark() {
 }
 
 onMounted(async () => {
-  await Promise.all([
-    clientStore.fetchClients(),
-    clientStore.fetchCompanies(),
-    taskStore.fetchTasks(),
-  ])
+  await Promise.all([clientStore.fetchClients(), clientStore.fetchCompanies(), taskStore.fetchTasks()])
 })
 </script>
-

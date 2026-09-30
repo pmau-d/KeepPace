@@ -103,12 +103,20 @@ export const useTaskStore = defineStore('tasks', () => {
   }
 
   return {
-    tasks, loading, selectedTask, filters,
-    fetchTasks, createTask, updateTask,
-    deleteTask, closeTask, reopenTask, clearTasks,
-    selectTask, closeSlideOver, setFilter, setClientFilter,
+    tasks,
+    loading,
+    selectedTask,
+    filters,
+    fetchTasks,
+    createTask,
+    updateTask,
+    deleteTask,
+    closeTask,
+    reopenTask,
+    clearTasks,
+    selectTask,
+    closeSlideOver,
+    setFilter,
+    setClientFilter,
   }
 })
-
-
-
