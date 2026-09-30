@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import case, asc, nulls_last
-from app.database import get_db
-from app import models, schemas
-from app.utils import enrich_task
-from typing import Optional
 from datetime import date, timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import asc, case, nulls_last
+from sqlalchemy.orm import Session
+
+from app import models, schemas
+from app.database import get_db
+from app.utils import enrich_task
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -60,11 +61,11 @@ def _presence_status_filter(query, presence_status: str, db: Session):
 
 @router.get("/", response_model=list[schemas.TaskRead])
 def get_tasks(
-    client_id: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
+    client_id: str | None = Query(None),
+    status: str | None = Query(None),
     show_done: bool = Query(False),
-    search: Optional[str] = Query(None),
-    presence_status: Optional[str] = Query(None),
+    search: str | None = Query(None),
+    presence_status: str | None = Query(None),
     db: Session = Depends(get_db),
 ):
     query = db.query(models.Task)
@@ -80,14 +81,17 @@ def get_tasks(
     if presence_status:
         query = _presence_status_filter(query, presence_status, db)
 
-    return [enrich_task(t) for t in query.order_by(
-        # 1. Tâches avec date d'abord (NULL en dernier)
-        nulls_last(asc(models.Task.due_date)),
-        # 2. Priorité HIGH → MEDIUM → LOW
-        asc(PRIORITY_ORDER),
-        # 3. À égalité : plus récente d'abord
-        models.Task.created_at.desc(),
-    ).all()]
+    return [
+        enrich_task(t)
+        for t in query.order_by(
+            # 1. Tâches avec date d'abord (NULL en dernier)
+            nulls_last(asc(models.Task.due_date)),
+            # 2. Priorité HIGH → MEDIUM → LOW
+            asc(PRIORITY_ORDER),
+            # 3. À égalité : plus récente d'abord
+            models.Task.created_at.desc(),
+        ).all()
+    ]
 
 
 @router.post("/", response_model=schemas.TaskRead, status_code=201)
@@ -161,8 +165,13 @@ def close_task(task_id: str, db: Session = Depends(get_db)):
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     if task.status != "DONE":
-        log = models.TaskLog(task_id=task.id, field_changed="status",
-                             old_value=task.status, new_value="DONE", comment="Tâche fermée")
+        log = models.TaskLog(
+            task_id=task.id,
+            field_changed="status",
+            old_value=task.status,
+            new_value="DONE",
+            comment="Tâche fermée",
+        )
         db.add(log)
         task.status = "DONE"
         db.commit()
@@ -177,8 +186,13 @@ def reopen_task(task_id: str, db: Session = Depends(get_db)):
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     if task.status == "DONE":
-        log = models.TaskLog(task_id=task.id, field_changed="status",
-                             old_value="DONE", new_value="TODO", comment="Tâche réouverte")
+        log = models.TaskLog(
+            task_id=task.id,
+            field_changed="status",
+            old_value="DONE",
+            new_value="TODO",
+            comment="Tâche réouverte",
+        )
         db.add(log)
         task.status = "TODO"
         db.commit()
@@ -225,13 +239,15 @@ def add_task_comment(task_id: str, data: schemas.TaskCommentCreate, db: Session 
 
 @router.delete("/{task_id}/comments/{comment_id}", status_code=204)
 def delete_task_comment(task_id: str, comment_id: str, db: Session = Depends(get_db)):
-    comment = db.query(models.TaskComment).filter(
-        models.TaskComment.id == comment_id,
-        models.TaskComment.task_id == task_id,
-    ).first()
+    comment = (
+        db.query(models.TaskComment)
+        .filter(
+            models.TaskComment.id == comment_id,
+            models.TaskComment.task_id == task_id,
+        )
+        .first()
+    )
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     db.delete(comment)
     db.commit()
-
-

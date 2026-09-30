@@ -1,6 +1,8 @@
 import uuid
-from sqlalchemy import Column, String, Text, Date, DateTime, ForeignKey, func
+
+from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import relationship
+
 from app.database import Base
 
 
@@ -23,7 +25,7 @@ class Client(Base):
     id = Column(String, primary_key=True, default=gen_uuid)
     company_id = Column(String, ForeignKey("companies.id"), nullable=False)
     first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=True)   # optionnel
+    last_name = Column(String, nullable=True)  # optionnel
     email = Column(String, nullable=True)
     absence_end_date = Column(Date, nullable=True)
 
@@ -39,15 +41,19 @@ class Task(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String, nullable=False, default="TODO")
-    sub_status = Column(String, nullable=True)   # statut personnalisé libre
+    sub_status = Column(String, nullable=True)  # statut personnalisé libre
     priority = Column(String, nullable=False, default="MEDIUM")
     due_date = Column(Date, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     client = relationship("Client", back_populates="tasks")
-    logs = relationship("TaskLog", back_populates="task", cascade="all, delete-orphan", order_by="TaskLog.created_at")
-    comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan", order_by="TaskComment.created_at")
+    logs = relationship(
+        "TaskLog", back_populates="task", cascade="all, delete-orphan", order_by="TaskLog.created_at"
+    )
+    comments = relationship(
+        "TaskComment", back_populates="task", cascade="all, delete-orphan", order_by="TaskComment.created_at"
+    )
 
 
 class TaskComment(Base):
@@ -73,4 +79,3 @@ class TaskLog(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     task = relationship("Task", back_populates="logs")
-

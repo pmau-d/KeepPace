@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from app.database import wait_for_db, engine, Base, get_db
 from sqlalchemy import text
-from app.routers import companies, clients, tasks
+from sqlalchemy.orm import Session
+
 from app import models as db_models  # noqa – registers models with Base
+from app.database import Base, engine, get_db, wait_for_db
+from app.routers import clients, companies, tasks
 
 
 @asynccontextmanager
@@ -57,5 +59,3 @@ def reset_all_data(db: Session = Depends(get_db)):
     db.query(db_models.Client).delete()
     db.query(db_models.Company).delete()
     db.commit()
-
-
