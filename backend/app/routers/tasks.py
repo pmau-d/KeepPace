@@ -5,6 +5,7 @@ from sqlalchemy import asc, case, nulls_last
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+from app.archive import archive_task, restore_task
 from app.database import get_db
 from app.deps import get_current_user
 from app.enums import TaskPriority, TaskStatus
@@ -56,8 +57,10 @@ def _presence_status_filter(query, presence_status: str):
     return query
 
 
-def _log(task: models.Task, field: str, old, new, comment: str | None = None) -> models.TaskLog:
-    return models.TaskLog(task_id=task.id, field_changed=field, old_value=old, new_value=new, comment=comment)
+def _log(task: models.Task, field: str, old, new, comment: str | None = None, **labels) -> models.TaskLog:
+    return models.TaskLog(
+        task_id=task.id, field_changed=field, old_value=old, new_value=new, comment=comment, **labels
+    )
 
 
 @router.get("/", response_model=list[schemas.TaskRead])
@@ -67,10 +70,11 @@ def list_tasks(
     show_done: bool = Query(False),
     search: str | None = Query(None),
     presence_status: str | None = Query(None),
+    archived: bool = Query(False),
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    query = owned(db, models.Task, user)
+    query = owned(db, models.Task, user, archived=archived)
     if client_id:
         query = query.filter(models.Task.client_id == client_id)
     if status:
@@ -122,16 +126,19 @@ def update_task(
     task = get_task(db, task_id, user)
     update_data = data.model_dump(exclude_unset=True)
     comment = update_data.pop("comment", None)
-    if update_data.get("client_id"):
-        get_client(db, update_data["client_id"], user)
+    new_client = get_client(db, update_data["client_id"], user) if update_data.get("client_id") else None
 
     # Une entrée d'audit par champ suivi réellement modifié
     for field in TRACKED_FIELDS:
         if field in update_data:
             old_val = str(getattr(task, field)) if getattr(task, field) is not None else None
             new_val = str(update_data[field]) if update_data[field] is not None else None
-            if old_val != new_val:
-                db.add(_log(task, field, old_val, new_val, comment))
+            if old_val == new_val:
+                continue
+            labels = {}
+            if field == "client_id":
+                labels = {"old_label": task.client.display_name, "new_label": new_client.display_name}
+            db.add(_log(task, field, old_val, new_val, comment, **labels))
 
     for field, value in update_data.items():
         setattr(task, field, value)
@@ -166,15 +173,28 @@ def reopen_task(task_id: str, db: Session = Depends(get_db), user: models.User =
 
 @router.delete("/{task_id}", status_code=204)
 def delete_task(task_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    db.delete(get_task(db, task_id, user))
+    """Archive la tâche : elle disparaît des listes mais garde tout son historique."""
+    archive_task(db, get_task(db, task_id, user), "Tâche archivée")
     db.commit()
+
+
+@router.post("/{task_id}/restore", response_model=schemas.TaskRead)
+def restore(task_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    task = get_task(db, task_id, user, archived=True)
+    if task.client.archived_at is not None:
+        raise HTTPException(status_code=409, detail="Restaurez d'abord le client de cette tâche")
+    restore_task(db, task)
+    db.commit()
+    db.refresh(task)
+    return enrich_task(task)
 
 
 @router.get("/{task_id}/logs", response_model=list[schemas.TaskLogRead])
 def list_task_logs(
     task_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
 ):
-    return get_task(db, task_id, user).logs
+    # L'historique reste consultable pour une tâche archivée.
+    return get_task(db, task_id, user, archived=None).logs
 
 
 @router.get("/{task_id}/comments", response_model=list[schemas.TaskCommentRead])
@@ -214,5 +234,7 @@ def delete_task_comment(
     )
     if not comment:
         raise HTTPException(status_code=404, detail="Commentaire introuvable")
+    # Le contenu supprimé reste tracé dans le journal de la tâche.
+    db.add(_log(task, "comment", comment.content, None, "Commentaire supprimé"))
     db.delete(comment)
     db.commit()

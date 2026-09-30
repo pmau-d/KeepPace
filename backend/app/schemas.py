@@ -101,6 +101,8 @@ class TaskLogRead(BaseModel):
     field_changed: str
     old_value: str | None = None
     new_value: str | None = None
+    old_label: str | None = None
+    new_label: str | None = None
     comment: str | None = None
     created_at: datetime
 
