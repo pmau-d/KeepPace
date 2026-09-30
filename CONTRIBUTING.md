@@ -1,6 +1,7 @@
 # Contribuer à KeepPace
 
 Merci de votre intérêt ! Ce guide explique comment proposer une modification.
+En participant, vous acceptez de respecter le [code de conduite](CODE_OF_CONDUCT.md).
 
 ## Avant de commencer
 
