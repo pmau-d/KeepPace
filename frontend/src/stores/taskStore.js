@@ -1,122 +1,149 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { tasksApi } from '../api/index.js'
+
+export const PAGE_SIZE = 50
+
+function defaultFilters() {
+  return { clientId: null, status: null, presenceStatus: null, showDone: false, search: '' }
+}
 
 export const useTaskStore = defineStore('tasks', () => {
   const tasks = ref([])
+  const total = ref(0)
   const loading = ref(false)
-  const selectedTask = ref(null)
+  const loadingMore = ref(false)
+  const filters = ref(defaultFilters())
+  const hasMore = computed(() => tasks.value.length < total.value)
+  // Évite qu'une réponse lente écrase le résultat d'une recherche plus récente
+  let requestId = 0
 
-  const filters = ref({
-    clientId: null,
-    status: null,
-    presenceStatus: null,
-    showDone: false,
-    search: '',
-  })
+  function queryParams() {
+    const f = filters.value
+    const params = {}
+    if (f.clientId) params.client_id = f.clientId
+    if (f.status) params.status = f.status
+    if (f.presenceStatus) params.presence_status = f.presenceStatus
+    if (f.showDone) params.show_done = true
+    if (f.search.trim()) params.search = f.search.trim()
+    return params
+  }
 
   async function fetchTasks() {
+    const current = ++requestId
     loading.value = true
     try {
-      const params = {}
-      if (filters.value.clientId) params.client_id = filters.value.clientId
-      if (filters.value.status) params.status = filters.value.status
-      if (filters.value.presenceStatus) params.presence_status = filters.value.presenceStatus
-      if (filters.value.showDone) params.show_done = true
-      if (filters.value.search) params.search = filters.value.search
-      const res = await tasksApi.getAll(params)
-      tasks.value = res.data
+      const { data } = await tasksApi.list({ ...queryParams(), limit: PAGE_SIZE, offset: 0 })
+      if (current !== requestId) return
+      tasks.value = data.items
+      total.value = data.total
     } finally {
-      loading.value = false
+      if (current === requestId) loading.value = false
     }
+  }
+
+  async function loadMore() {
+    if (!hasMore.value || loadingMore.value) return
+    loadingMore.value = true
+    try {
+      const { data } = await tasksApi.list({ ...queryParams(), limit: PAGE_SIZE, offset: tasks.value.length })
+      const known = new Set(tasks.value.map((t) => t.id))
+      tasks.value.push(...data.items.filter((t) => !known.has(t.id)))
+      total.value = data.total
+    } finally {
+      loadingMore.value = false
+    }
+  }
+
+  /** Met à jour la tâche dans la liste, ou l'en retire si elle ne correspond plus aux filtres. */
+  function syncInList(task) {
+    const idx = tasks.value.findIndex((t) => t.id === task.id)
+    if (idx === -1) return
+    if (task.status === 'DONE' && !filters.value.showDone) {
+      tasks.value.splice(idx, 1)
+      total.value -= 1
+    } else {
+      tasks.value[idx] = task
+    }
+  }
+
+  async function fetchTask(id) {
+    return (await tasksApi.get(id)).data
   }
 
   async function createTask(data) {
-    const res = await tasksApi.create(data)
-    tasks.value.unshift(res.data)
-    return res.data
+    const task = (await tasksApi.create(data)).data
+    // Recharger pour respecter le tri et les filtres serveur
+    await fetchTasks()
+    return task
   }
 
   async function updateTask(id, data) {
-    const res = await tasksApi.update(id, data)
-    const idx = tasks.value.findIndex((t) => t.id === id)
-    if (idx !== -1) {
-      if (res.data.status === 'DONE' && !filters.value.showDone) {
-        tasks.value.splice(idx, 1)
-      } else {
-        tasks.value[idx] = res.data
-      }
-    }
-    if (selectedTask.value?.id === id) {
-      selectedTask.value = res.data
-    }
-    return res.data
-  }
-
-  async function deleteTask(id) {
-    await tasksApi.delete(id)
-    tasks.value = tasks.value.filter((t) => t.id !== id)
-    if (selectedTask.value?.id === id) selectedTask.value = null
+    const task = (await tasksApi.update(id, data)).data
+    syncInList(task)
+    return task
   }
 
   async function closeTask(id) {
-    const res = await tasksApi.close(id)
-    const idx = tasks.value.findIndex((t) => t.id === id)
-    if (idx !== -1) {
-      if (!filters.value.showDone) tasks.value.splice(idx, 1)
-      else tasks.value[idx] = res.data
-    }
-    if (selectedTask.value?.id === id) selectedTask.value = res.data
-    return res.data
+    const task = (await tasksApi.close(id)).data
+    syncInList(task)
+    return task
   }
 
   async function reopenTask(id) {
-    const res = await tasksApi.reopen(id)
-    const idx = tasks.value.findIndex((t) => t.id === id)
-    if (idx !== -1) tasks.value[idx] = res.data
-    if (selectedTask.value?.id === id) selectedTask.value = res.data
-    return res.data
+    const task = (await tasksApi.reopen(id)).data
+    syncInList(task)
+    return task
   }
 
-  function clearTasks() {
-    tasks.value = []
-    selectedTask.value = null
+  async function archiveTask(id) {
+    await tasksApi.archive(id)
+    const before = tasks.value.length
+    tasks.value = tasks.value.filter((t) => t.id !== id)
+    total.value -= before - tasks.value.length
   }
 
-  function selectTask(task) {
-    selectedTask.value = task
-  }
-
-  function closeSlideOver() {
-    selectedTask.value = null
+  async function restoreTask(id) {
+    const task = (await tasksApi.restore(id)).data
+    await fetchTasks()
+    return task
   }
 
   function setFilter(key, value) {
     filters.value[key] = value
-    fetchTasks()
+    return fetchTasks()
   }
 
   function setClientFilter(clientId) {
-    // Toggle: clicking the same client deselects it
     filters.value.clientId = filters.value.clientId === clientId ? null : clientId
-    fetchTasks()
+    return fetchTasks()
+  }
+
+  function reset() {
+    tasks.value = []
+    total.value = 0
+    filters.value = defaultFilters()
   }
 
   return {
     tasks,
+    total,
     loading,
-    selectedTask,
+    loadingMore,
     filters,
+    hasMore,
+    queryParams,
     fetchTasks,
+    loadMore,
+    fetchTask,
     createTask,
     updateTask,
-    deleteTask,
     closeTask,
     reopenTask,
-    clearTasks,
-    selectTask,
-    closeSlideOver,
+    archiveTask,
+    restoreTask,
     setFilter,
     setClientFilter,
+    reset,
   }
 })
