@@ -40,6 +40,7 @@ class CompanyCreate(BaseModel):
 class CompanyRead(BaseModel):
     id: str
     name: str
+    archived_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -84,6 +85,7 @@ class ClientRead(BaseModel):
     email: str | None = None
     absence_start_date: date | None = None
     absence_end_date: date | None = None
+    archived_at: datetime | None = None
     company: CompanyRead
     presence_status: PresenceStatus | None = None
 
