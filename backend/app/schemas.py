@@ -2,6 +2,8 @@ from datetime import date, datetime
 
 from pydantic import BaseModel
 
+from app.enums import TaskPriority, TaskStatus
+
 # ─── Company ────────────────────────────────────────────────────────────────
 
 
@@ -86,9 +88,9 @@ class TaskCreate(BaseModel):
     client_id: str
     title: str
     description: str | None = None
-    status: str = "TODO"
+    status: TaskStatus = TaskStatus.TODO
     sub_status: str | None = None
-    priority: str = "MEDIUM"
+    priority: TaskPriority = TaskPriority.MEDIUM
     due_date: date | None = None
 
 
@@ -96,9 +98,9 @@ class TaskUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     client_id: str | None = None
-    status: str | None = None
+    status: TaskStatus | None = None
     sub_status: str | None = None
-    priority: str | None = None
+    priority: TaskPriority | None = None
     due_date: date | None = None
     comment: str | None = None  # stored in log, not in task
 
@@ -108,9 +110,9 @@ class TaskRead(BaseModel):
     client_id: str
     title: str
     description: str | None = None
-    status: str
+    status: TaskStatus
     sub_status: str | None = None
-    priority: str
+    priority: TaskPriority
     due_date: date | None = None
     created_at: datetime
     updated_at: datetime

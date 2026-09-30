@@ -1,13 +1,29 @@
 import uuid
 
-from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Column, Date, Enum, ForeignKey, String, Text, func
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.enums import TaskPriority, TaskStatus
+from app.types import UTCDateTime, utcnow
 
 
 def gen_uuid():
     return str(uuid.uuid4())
+
+
+def _enum(enum_cls, name: str) -> Enum:
+    # VARCHAR + contrainte CHECK plutôt qu'un type ENUM natif : portable (SQLite
+    # en test) et ajout de valeurs sans migration de type PostgreSQL.
+    return Enum(
+        enum_cls,
+        name=name,
+        native_enum=False,
+        create_constraint=True,
+        length=20,
+        values_callable=lambda e: [m.value for m in e],
+        validate_strings=True,
+    )
 
 
 class Company(Base):
@@ -40,12 +56,14 @@ class Task(Base):
     client_id = Column(String, ForeignKey("clients.id"), nullable=False)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    status = Column(String, nullable=False, default="TODO")
+    status = Column(_enum(TaskStatus, "task_status"), nullable=False, default=TaskStatus.TODO)
     sub_status = Column(String, nullable=True)  # statut personnalisé libre
-    priority = Column(String, nullable=False, default="MEDIUM")
+    priority = Column(_enum(TaskPriority, "task_priority"), nullable=False, default=TaskPriority.MEDIUM)
     due_date = Column(Date, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
+    updated_at = Column(
+        UTCDateTime, nullable=False, default=utcnow, server_default=func.now(), onupdate=utcnow
+    )
 
     client = relationship("Client", back_populates="tasks")
     logs = relationship(
@@ -62,7 +80,7 @@ class TaskComment(Base):
     id = Column(String, primary_key=True, default=gen_uuid)
     task_id = Column(String, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
 
     task = relationship("Task", back_populates="comments")
 
@@ -76,6 +94,6 @@ class TaskLog(Base):
     old_value = Column(Text, nullable=True)
     new_value = Column(Text, nullable=True)
     comment = Column(Text, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
 
     task = relationship("Task", back_populates="logs")

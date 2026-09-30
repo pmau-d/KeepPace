@@ -58,3 +58,16 @@ def test_comments(client):
     comment = client.post(f"/tasks/{task['id']}/comments", json={"content": "Appelé"}).json()
     assert client.get(f"/tasks/{task['id']}/comments").json()[0]["content"] == "Appelé"
     assert client.delete(f"/tasks/{task['id']}/comments/{comment['id']}").status_code == 204
+
+
+def test_unknown_status_and_priority_are_rejected(client):
+    customer = make_client(client)
+    base = {"client_id": customer["id"], "title": "x"}
+    assert client.post("/tasks/", json={**base, "status": "WHATEVER"}).status_code == 422
+    assert client.post("/tasks/", json={**base, "priority": "URGENT"}).status_code == 422
+
+
+def test_timestamps_are_timezone_aware(client):
+    customer = make_client(client)
+    task = client.post("/tasks/", json={"client_id": customer["id"], "title": "x"}).json()
+    assert task["created_at"].endswith(("Z", "+00:00"))
