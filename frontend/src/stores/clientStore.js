@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { clientsApi, companiesApi, adminApi } from '../api/index.js'
+import { clientsApi, companiesApi } from '../api/index.js'
 
 export const useClientStore = defineStore('clients', () => {
   const clients = ref([])
@@ -62,12 +62,6 @@ export const useClientStore = defineStore('clients', () => {
     return res.data
   }
 
-  async function resetAll() {
-    await adminApi.reset()
-    clients.value = []
-    companies.value = []
-  }
-
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   function presenceColor(status) {
@@ -110,7 +104,6 @@ export const useClientStore = defineStore('clients', () => {
     editCompany,
     deleteClient,
     deleteCompany,
-    resetAll,
     presenceColor,
     presenceLabel,
     fullName,

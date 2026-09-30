@@ -37,7 +37,15 @@ def database_url(tmp_path):
 def engine(database_url):
     engine = create_engine(database_url)
     with engine.begin() as conn:
-        for table in ("task_logs", "task_comments", "tasks", "clients", "companies", "alembic_version"):
+        for table in (
+            "task_logs",
+            "task_comments",
+            "tasks",
+            "clients",
+            "companies",
+            "users",
+            "alembic_version",
+        ):
             conn.execute(
                 text(
                     f"DROP TABLE IF EXISTS {table} CASCADE"

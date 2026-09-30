@@ -34,8 +34,3 @@ export const tasksApi = {
   addComment: (id, content) => api.post(`/tasks/${id}/comments`, { content }),
   deleteComment: (taskId, commentId) => api.delete(`/tasks/${taskId}/comments/${commentId}`),
 }
-
-// ─── Admin ───────────────────────────────────────────────────────────────────
-export const adminApi = {
-  reset: () => api.delete('/admin/reset'),
-}
