@@ -118,28 +118,31 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
 import StatusBadge from '../StatusBadge.vue'
 import PriorityBadge from '../PriorityBadge.vue'
 import TaskEditForm from './TaskEditForm.vue'
 import TaskComments from './TaskComments.vue'
 import TaskHistory from './TaskHistory.vue'
-import { useTaskStore } from '../../stores/taskStore.js'
-import { fullName, presenceColor, presenceLabel } from '../../utils/labels.js'
+import { useTaskStore } from '../../stores/taskStore'
+import { fullName, presenceColor, presenceLabel } from '../../utils/labels'
+import { httpStatus } from '../../api/index'
+import type { Task, TaskSummary } from '../../types/api'
 
-const props = defineProps({ taskId: { type: String, required: true } })
-const emit = defineEmits(['close', 'duplicate', 'changed'])
+const props = defineProps<{ taskId: string }>()
+const emit = defineEmits<{ close: []; duplicate: [task: Task]; changed: [] }>()
 
 const taskStore = useTaskStore()
-const task = ref(null)
+const task = ref<Task | null>(null)
 const loading = ref(true)
-const panel = ref(null)
-const activeTab = ref('edit')
+const panel = ref<HTMLElement | null>(null)
+type Tab = 'edit' | 'comments' | 'history'
+const activeTab = ref<Tab>('edit')
 // Incrémenté à chaque modification pour recharger l'historique
 const historyVersion = ref(0)
 
-const tabs = [
+const tabs: { id: Tab; label: string }[] = [
   { id: 'edit', label: 'Modifier' },
   { id: 'comments', label: 'Commentaires' },
   { id: 'history', label: 'Historique' },
@@ -150,7 +153,7 @@ async function load() {
   try {
     task.value = await taskStore.fetchTask(props.taskId)
   } catch (error) {
-    if (error.response?.status !== 404) throw error
+    if (httpStatus(error) !== 404) throw error
     task.value = null
   } finally {
     loading.value = false
@@ -159,8 +162,8 @@ async function load() {
   }
 }
 
-function onUpdated(updated) {
-  task.value = { ...task.value, ...updated }
+function onUpdated(updated: TaskSummary) {
+  if (task.value) task.value = { ...task.value, ...updated }
   historyVersion.value++
   emit('changed')
 }

@@ -3,15 +3,16 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
-vi.mock('../../api/index.js', async (importOriginal) => ({
-  ...(await importOriginal()),
+vi.mock('../../api/index', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../api/index')>()),
   authApi: { login: vi.fn(), register: vi.fn() },
 }))
 
-import { authApi } from '../../api/index.js'
+import { authApi } from '../../api/index'
 import AuthView from '../AuthView.vue'
+import { makeUser, response } from '../../test/factories'
 
-async function mountAt(path, props = {}) {
+async function mountAt(path: string, props: Record<string, unknown> = {}) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -33,7 +34,7 @@ describe('AuthView', () => {
   })
 
   it('connecte puis redirige vers la page demandée', async () => {
-    authApi.login.mockResolvedValueOnce({ data: { id: '1', email: 'a@example.com' } })
+    vi.mocked(authApi.login).mockResolvedValueOnce(response(makeUser()) as never)
     const { wrapper, router } = await mountAt('/login?redirect=/tasks/42')
     await wrapper.find('#email').setValue('a@example.com')
     await wrapper.find('#password').setValue('secret-password')
@@ -44,7 +45,7 @@ describe('AuthView', () => {
   })
 
   it("n'accepte pas de redirection vers un autre site", async () => {
-    authApi.login.mockResolvedValueOnce({ data: { id: '1', email: 'a@example.com' } })
+    vi.mocked(authApi.login).mockResolvedValueOnce(response(makeUser()) as never)
     const { wrapper, router } = await mountAt('/login?redirect=//evil.example')
     await wrapper.find('#email').setValue('a@example.com')
     await wrapper.find('#password').setValue('secret-password')
@@ -54,7 +55,7 @@ describe('AuthView', () => {
   })
 
   it("affiche l'erreur renvoyée par l'API", async () => {
-    authApi.login.mockRejectedValueOnce({
+    vi.mocked(authApi.login).mockRejectedValueOnce({
       isAxiosError: true,
       response: { status: 401, data: { detail: 'Email ou mot de passe incorrect' } },
     })

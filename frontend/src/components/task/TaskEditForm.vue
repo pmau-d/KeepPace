@@ -133,15 +133,16 @@
   </form>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { confirm } from '../../composables/useConfirm.js'
-import { useTaskStore } from '../../stores/taskStore.js'
-import { useToastStore } from '../../stores/toast.js'
-import { PRIORITY_LABELS, STATUS_LABELS } from '../../utils/labels.js'
+import { confirm } from '../../composables/useConfirm'
+import { useTaskStore } from '../../stores/taskStore'
+import { useToastStore } from '../../stores/toast'
+import { PRIORITY_LABELS, STATUS_LABELS } from '../../utils/labels'
+import type { Task, TaskPriority, TaskStatus, TaskSummary, TaskUpdatePayload } from '../../types/api'
 
-const props = defineProps({ task: { type: Object, required: true } })
-const emit = defineEmits(['updated', 'duplicate', 'archived'])
+const props = defineProps<{ task: Task }>()
+const emit = defineEmits<{ updated: [task: TaskSummary]; duplicate: []; archived: [] }>()
 
 const taskStore = useTaskStore()
 const toast = useToastStore()
@@ -162,25 +163,47 @@ const labelClass = 'block text-xs font-medium text-slate-500 dark:text-slate-400
 const inputClass =
   'w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 placeholder-slate-400'
 
-const EDITABLE = ['title', 'status', 'priority', 'sub_status', 'due_date', 'description']
-const form = reactive({})
+const EDITABLE = ['title', 'status', 'priority', 'sub_status', 'due_date', 'description'] as const
+type EditableField = (typeof EDITABLE)[number]
+
+interface EditForm {
+  title: string
+  status: TaskStatus
+  priority: TaskPriority
+  sub_status: string
+  due_date: string
+  description: string
+  comment: string
+}
+
+const form = reactive<EditForm>(formFrom(props.task))
 const saving = ref(false)
 const busy = ref(false)
 
-function resetForm(task) {
-  for (const field of EDITABLE) form[field] = task[field] ?? ''
-  form.comment = ''
+function formFrom(task: Task): EditForm {
+  return {
+    title: task.title,
+    status: task.status,
+    priority: task.priority,
+    sub_status: task.sub_status ?? '',
+    due_date: task.due_date ?? '',
+    description: task.description ?? '',
+    comment: '',
+  }
 }
-watch(() => props.task, resetForm, { immediate: true })
+watch(
+  () => props.task,
+  (task) => Object.assign(form, formFrom(task)),
+)
 
 /** Champs réellement modifiés (chaînes vides envoyées comme null). */
-const changes = computed(() => {
-  const diff = {}
-  for (const field of EDITABLE) {
+const changes = computed<TaskUpdatePayload>(() => {
+  const diff: Record<string, string | null> = {}
+  for (const field of EDITABLE satisfies readonly EditableField[]) {
     const value = form[field] === '' ? null : form[field]
     if (value !== (props.task[field] ?? null)) diff[field] = value
   }
-  return diff
+  return diff as TaskUpdatePayload
 })
 const isDirty = computed(() => Object.keys(changes.value).length > 0)
 
@@ -203,7 +226,7 @@ async function save() {
   }
 }
 
-async function run(action, successMessage) {
+async function run(action: () => Promise<TaskSummary>, successMessage: string) {
   busy.value = true
   try {
     emit('updated', await action())

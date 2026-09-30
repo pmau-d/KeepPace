@@ -17,16 +17,16 @@
   <ConfirmDialog />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
-import { useDarkMode } from './composables/useDarkMode.js'
-import { useAuthStore } from './stores/auth.js'
-import { useClientStore } from './stores/clientStore.js'
-import { useTaskStore } from './stores/taskStore.js'
+import { useDarkMode } from './composables/useDarkMode'
+import { useAuthStore } from './stores/auth'
+import { useClientStore } from './stores/clientStore'
+import { useTaskStore } from './stores/taskStore'
 
 useDarkMode()
 const route = useRoute()

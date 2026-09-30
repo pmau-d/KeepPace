@@ -108,11 +108,11 @@ flowchart LR
 
 | Couche      | Technologies                                                        |
 | ----------- | ------------------------------------------------------------------- |
-| Frontend    | Vue 3.5, Vite 8, Pinia, Vue Router, Tailwind CSS 4, Axios           |
+| Frontend    | Vue 3.5 + TypeScript (strict), Vite 8, Pinia, Vue Router, Tailwind CSS 4, Axios |
 | Backend     | Python 3.12, FastAPI, SQLAlchemy 2, Alembic, Pydantic 2             |
 | Sécurité    | Argon2 (mots de passe), JWT en cookie httpOnly, limitation des tentatives |
 | Données     | PostgreSQL 15 (SQLite en mémoire pour les tests)                    |
-| Qualité     | pytest, ruff, Vitest, ESLint, Prettier, GitHub Actions              |
+| Qualité     | pytest, ruff, vue-tsc, Vitest, ESLint, Prettier, GitHub Actions     |
 | Déploiement | Images Docker multi-étapes, nginx, healthchecks                     |
 
 <details>
@@ -140,6 +140,7 @@ KeepPace/
 │   │   ├── components/        # liste, cartes, panneau de tâche, modales
 │   │   ├── stores/            # Pinia : auth, tâches, clients, toasts
 │   │   ├── router/            # routes et garde d'authentification
+│   │   ├── types/             # types TypeScript de l'API
 │   │   └── utils/             # libellés, regroupement par jour
 │   └── nginx.conf             # configuration de production
 ├── docker-compose.yml         # développement
@@ -228,7 +229,8 @@ npm run dev        # http://localhost:3000, /api relayé vers localhost:8000
 | Commande (frontend)                | Rôle                               |
 | ---------------------------------- | ---------------------------------- |
 | `npm test`                         | Tests Vitest                       |
-| `npm run lint`                     | ESLint                             |
+| `npm run lint`                     | Vérification des types (vue-tsc) puis ESLint |
+| `npm run type-check`               | Vérification des types seule       |
 | `npm run format:check`             | Prettier                           |
 | `npm run build`                    | Build de production                |
 

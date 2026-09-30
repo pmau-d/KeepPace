@@ -149,13 +149,14 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
-import { errorMessage } from '../api/index.js'
-import { useClientStore } from '../stores/clientStore.js'
+import { errorMessage, httpStatus } from '../api/index'
+import { useClientStore } from '../stores/clientStore'
 import AbsencePeriodFields from './AbsencePeriodFields.vue'
+import type { Client, ClientPayload, Company } from '../types/api'
 
-const emit = defineEmits(['close', 'created'])
+const emit = defineEmits<{ close: []; created: [client: Client] }>()
 const clientStore = useClientStore()
 const form = reactive({
   first_name: '',
@@ -176,7 +177,7 @@ const filteredCompanies = computed(() => {
   return clientStore.companies.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 6)
 })
 
-function selectCompany(company) {
+function selectCompany(company: Company) {
   form.company_id = company.id
   companySearch.value = company.name
   showCompanyDropdown.value = false
@@ -208,7 +209,7 @@ async function createAndSelectCompany() {
     selectCompany(comp)
   } catch (e) {
     // Conflit 400 : quelqu'un l'a créée entre-temps — recharger et sélectionner
-    if (e.response?.status === 400) {
+    if (httpStatus(e) === 400) {
       await clientStore.fetchCompanies()
       const fresh = clientStore.companies.find(
         (c) => c.name.toLowerCase() === companySearch.value.trim().toLowerCase(),
@@ -226,7 +227,7 @@ async function submit() {
   submitting.value = true
   error.value = ''
   try {
-    const payload = {
+    const payload: ClientPayload = {
       company_id: form.company_id,
       first_name: form.first_name,
     }

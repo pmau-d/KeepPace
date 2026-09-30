@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
-vi.mock('../../api/index.js', () => ({
+vi.mock('../../api/index', () => ({
   tasksApi: {
     list: vi.fn(),
     update: vi.fn(),
@@ -9,10 +9,14 @@ vi.mock('../../api/index.js', () => ({
   },
 }))
 
-import { tasksApi } from '../../api/index.js'
-import { useTaskStore } from '../taskStore.js'
+import { tasksApi } from '../../api/index'
+import { useTaskStore } from '../taskStore'
+import { makeTask, response } from '../../test/factories'
+import type { TaskPage, TaskSummary } from '../../types/api'
 
-const task = (id, extra = {}) => ({ id, title: id, status: 'TODO', ...extra })
+const task = (id: string, extra: Partial<TaskSummary> = {}) => makeTask({ id, ...extra })
+const page = (items: TaskSummary[], total: number) =>
+  response<TaskPage>({ items, total, limit: 50, offset: 0 }) as never
 
 describe('taskStore', () => {
   beforeEach(() => {
@@ -22,14 +26,14 @@ describe('taskStore', () => {
 
   it('envoie les filtres et pagine', async () => {
     const store = useTaskStore()
-    tasksApi.list.mockResolvedValueOnce({ data: { items: [task('a'), task('b')], total: 3 } })
+    vi.mocked(tasksApi.list).mockResolvedValueOnce(page([task('a'), task('b')], 3))
     store.filters.search = '  contrat '
     store.filters.showDone = true
     await store.fetchTasks()
     expect(tasksApi.list).toHaveBeenCalledWith({ search: 'contrat', show_done: true, limit: 50, offset: 0 })
     expect(store.hasMore).toBe(true)
 
-    tasksApi.list.mockResolvedValueOnce({ data: { items: [task('b'), task('c')], total: 3 } })
+    vi.mocked(tasksApi.list).mockResolvedValueOnce(page([task('b'), task('c')], 3))
     await store.loadMore()
     expect(tasksApi.list).toHaveBeenLastCalledWith(expect.objectContaining({ offset: 2 }))
     expect(store.tasks.map((t) => t.id)).toEqual(['a', 'b', 'c'])
@@ -38,13 +42,13 @@ describe('taskStore', () => {
 
   it('ignore une réponse arrivée après une recherche plus récente', async () => {
     const store = useTaskStore()
-    let resolveSlow
-    tasksApi.list
-      .mockReturnValueOnce(new Promise((resolve) => (resolveSlow = resolve)))
-      .mockResolvedValueOnce({ data: { items: [task('fresh')], total: 1 } })
+    let resolveSlow: (value: unknown) => void = () => {}
+    vi.mocked(tasksApi.list)
+      .mockReturnValueOnce(new Promise((resolve) => (resolveSlow = resolve)) as never)
+      .mockResolvedValueOnce(page([task('fresh')], 1))
     const slow = store.fetchTasks()
     await store.fetchTasks()
-    resolveSlow({ data: { items: [task('stale')], total: 1 } })
+    resolveSlow(page([task('stale')], 1))
     await slow
     expect(store.tasks.map((t) => t.id)).toEqual(['fresh'])
   })
@@ -53,11 +57,13 @@ describe('taskStore', () => {
     const store = useTaskStore()
     store.tasks = [task('a'), task('b')]
     store.total = 2
-    tasksApi.update.mockResolvedValueOnce({ data: task('a', { status: 'DONE' }) })
+    vi.mocked(tasksApi.update).mockResolvedValueOnce(
+      response({ ...task('a', { status: 'DONE' }), comments: [] }) as never,
+    )
     await store.updateTask('a', { status: 'DONE' })
     expect(store.tasks.map((t) => t.id)).toEqual(['b'])
 
-    tasksApi.archive.mockResolvedValueOnce({})
+    vi.mocked(tasksApi.archive).mockResolvedValueOnce({} as never)
     await store.archiveTask('b')
     expect(store.tasks).toEqual([])
     expect(store.total).toBe(0)

@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { clientsApi, companiesApi } from '../api/index.js'
-import { fullName, presenceColor, presenceLabel } from '../utils/labels.js'
+import { clientsApi, companiesApi } from '../api/index'
+import { fullName, presenceColor, presenceLabel } from '../utils/labels'
+import type { Client, ClientPayload, Company } from '../types/api'
 
-const byName = (a, b) => a.name.localeCompare(b.name)
+const byName = (a: Company, b: Company) => a.name.localeCompare(b.name)
 
 export const useClientStore = defineStore('clients', () => {
-  const clients = ref([])
-  const companies = ref([])
+  const clients = ref<Client[]>([])
+  const companies = ref<Company[]>([])
   const loading = ref(false)
 
   async function fetchClients() {
@@ -27,26 +28,26 @@ export const useClientStore = defineStore('clients', () => {
     await Promise.all([fetchClients(), fetchCompanies()])
   }
 
-  async function createCompany(name) {
+  async function createCompany(name: string) {
     const company = (await companiesApi.create({ name })).data
     companies.value = [...companies.value, company].sort(byName)
     return company
   }
 
-  async function createClient(data) {
+  async function createClient(data: ClientPayload) {
     const client = (await clientsApi.create(data)).data
     clients.value.push(client)
     return client
   }
 
-  async function updateClient(id, data) {
+  async function updateClient(id: string, data: ClientPayload) {
     const client = (await clientsApi.update(id, data)).data
     const idx = clients.value.findIndex((c) => c.id === id)
     if (idx !== -1) clients.value[idx] = client
     return client
   }
 
-  async function editCompany(id, name) {
+  async function editCompany(id: string, name: string) {
     const company = (await companiesApi.update(id, { name })).data
     const idx = companies.value.findIndex((c) => c.id === id)
     if (idx !== -1) companies.value[idx] = company
@@ -56,23 +57,23 @@ export const useClientStore = defineStore('clients', () => {
   }
 
   // Archiver est réversible : restore* réactive ce qui a été archivé ensemble.
-  async function archiveClient(id) {
+  async function archiveClient(id: string) {
     await clientsApi.archive(id)
     clients.value = clients.value.filter((c) => c.id !== id)
   }
 
-  async function restoreClient(id) {
+  async function restoreClient(id: string) {
     await clientsApi.restore(id)
     await fetchClients()
   }
 
-  async function archiveCompany(id) {
+  async function archiveCompany(id: string) {
     await companiesApi.archive(id)
     companies.value = companies.value.filter((c) => c.id !== id)
     clients.value = clients.value.filter((c) => c.company_id !== id)
   }
 
-  async function restoreCompany(id) {
+  async function restoreCompany(id: string) {
     await companiesApi.restore(id)
     await fetchAll()
   }
