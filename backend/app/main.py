@@ -2,32 +2,17 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app import models as db_models  # noqa – registers models with Base
-from app.database import Base, engine, get_db, wait_for_db
+from app.database import get_db, wait_for_db
 from app.routers import clients, companies, tasks
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Le schéma est géré par Alembic (`alembic upgrade head`), plus au démarrage.
     wait_for_db()
-    Base.metadata.create_all(bind=engine)
-    # Migrations idempotentes
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("ALTER TABLE clients ALTER COLUMN last_name DROP NOT NULL"))
-            conn.commit()
-    except Exception:
-        pass
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS sub_status VARCHAR"))
-            conn.commit()
-    except Exception:
-        pass
-    print("✅ All tables created / verified.")
     yield
 
 
