@@ -1,0 +1,57 @@
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: keeppace_db
+    restart: always
+    environment:
+      POSTGRES_USER: keeppace_user
+      POSTGRES_PASSWORD: keeppace_password
+      POSTGRES_DB: keeppace_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - keeppace_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: keeppace_backend
+    restart: always
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://keeppace_user:keeppace_password@db:5432/keeppace_dev
+    depends_on:
+      - db
+    networks:
+      - keeppace_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: keeppace_frontend
+    restart: always
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - keeppace_network
+
+networks:
+  keeppace_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
