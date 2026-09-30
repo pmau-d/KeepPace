@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/pmau-d/KeepPace/actions/workflows/ci.yml/badge.svg)](https://github.com/pmau-d/KeepPace/actions/workflows/ci.yml)
 [![Licence : MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
-![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)
+![Python 3.14](https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white)
 ![Vue 3](https://img.shields.io/badge/vue-3.5-42b883?logo=vuedotjs&logoColor=white)
 ![PostgreSQL 15](https://img.shields.io/badge/postgresql-15-4169E1?logo=postgresql&logoColor=white)
 
@@ -147,7 +147,7 @@ flowchart LR
 | Couche      | Technologies                                                        |
 | ----------- | ------------------------------------------------------------------- |
 | Frontend    | Vue 3.5 + TypeScript (strict), Vite 8, Pinia, Vue Router, Tailwind CSS 4, Axios |
-| Backend     | Python 3.12, FastAPI, SQLAlchemy 2, Alembic, Pydantic 2             |
+| Backend     | Python 3.14, FastAPI, SQLAlchemy 2, Alembic, Pydantic 2             |
 | Sécurité    | Argon2 (mots de passe), JWT en cookie httpOnly, limitation des tentatives |
 | Données     | PostgreSQL 15 (SQLite en mémoire pour les tests)                    |
 | Qualité     | pytest, ruff, vue-tsc, Vitest, ESLint, Prettier, GitHub Actions     |
@@ -253,11 +253,11 @@ les messages arrivent dans Mailpit (http://localhost:8025), rien ne sort.
 
 ### Sans Docker
 
-Backend (Python 3.12 et une base PostgreSQL accessible) :
+Backend (Python 3.14, 3.12 minimum, et une base PostgreSQL accessible) :
 
 ```bash
 cd backend
-python3.12 -m venv .venv && source .venv/bin/activate
+python3.14 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 export DATABASE_URL=postgresql+psycopg://utilisateur:motdepasse@localhost:5432/keeppace
 alembic upgrade head
