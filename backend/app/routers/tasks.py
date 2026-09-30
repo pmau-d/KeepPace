@@ -1,5 +1,3 @@
-from datetime import date, timedelta
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import asc, case, nulls_last
 from sqlalchemy.orm import Session
@@ -8,9 +6,9 @@ from app import models, schemas
 from app.archive import archive_task, restore_task
 from app.database import get_db
 from app.deps import get_current_user
-from app.enums import TaskPriority, TaskStatus
+from app.enums import PresenceStatus, TaskPriority, TaskStatus
+from app.presence import enrich_task, enrich_tasks, presence_status_expr, today
 from app.repository import get_client, get_task, owned
-from app.utils import enrich_task
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -25,36 +23,9 @@ PRIORITY_ORDER = case(
 )
 
 
-def _presence_status_filter(query, presence_status: str):
-    """
-    Filtre les tâches selon le statut de présence calculé de leur client.
-    Le statut est calculé à partir de absence_end_date :
-      ABSENT        : absence_end_date > today + 3 jours
-      SOON_BACK     : 0 <= delta <= 3 jours
-      RECENTLY_BACK : -5 <= delta < 0 jours
-      PRESENT       : NULL ou delta < -5 jours
-    """
-    today = date.today()
+def _presence_status_filter(query, presence_status: PresenceStatus):
     query = query.join(models.Client, models.Task.client_id == models.Client.id)
-
-    if presence_status == "ABSENT":
-        return query.filter(models.Client.absence_end_date > today + timedelta(days=3))
-    if presence_status == "SOON_BACK":
-        return query.filter(
-            models.Client.absence_end_date >= today,
-            models.Client.absence_end_date <= today + timedelta(days=3),
-        )
-    if presence_status == "RECENTLY_BACK":
-        return query.filter(
-            models.Client.absence_end_date >= today - timedelta(days=5),
-            models.Client.absence_end_date < today,
-        )
-    if presence_status == "PRESENT":
-        return query.filter(
-            models.Client.absence_end_date.is_(None)
-            | (models.Client.absence_end_date < today - timedelta(days=5))
-        )
-    return query
+    return query.filter(presence_status_expr(today()) == presence_status.value)
 
 
 def _log(task: models.Task, field: str, old, new, comment: str | None = None, **labels) -> models.TaskLog:
@@ -69,7 +40,7 @@ def list_tasks(
     status: TaskStatus | None = Query(None),
     show_done: bool = Query(False),
     search: str | None = Query(None),
-    presence_status: str | None = Query(None),
+    presence_status: PresenceStatus | None = Query(None),
     archived: bool = Query(False),
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
@@ -94,7 +65,7 @@ def list_tasks(
         # 3. À égalité : plus récente d'abord
         models.Task.created_at.desc(),
     ).all()
-    return [enrich_task(t) for t in tasks]
+    return enrich_tasks(db, tasks)
 
 
 @router.post("/", response_model=schemas.TaskRead, status_code=201)
@@ -108,12 +79,12 @@ def create_task(
     db.add(_log(task, "status", None, task.status, "Tâche créée"))
     db.commit()
     db.refresh(task)
-    return enrich_task(task)
+    return enrich_task(db, task)
 
 
 @router.get("/{task_id}", response_model=schemas.TaskRead)
 def read_task(task_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    return enrich_task(get_task(db, task_id, user))
+    return enrich_task(db, get_task(db, task_id, user))
 
 
 @router.put("/{task_id}", response_model=schemas.TaskRead)
@@ -144,7 +115,7 @@ def update_task(
         setattr(task, field, value)
     db.commit()
     db.refresh(task)
-    return enrich_task(task)
+    return enrich_task(db, task)
 
 
 @router.post("/{task_id}/close", response_model=schemas.TaskRead)
@@ -156,7 +127,7 @@ def close_task(task_id: str, db: Session = Depends(get_db), user: models.User = 
         task.status = TaskStatus.DONE
         db.commit()
         db.refresh(task)
-    return enrich_task(task)
+    return enrich_task(db, task)
 
 
 @router.post("/{task_id}/reopen", response_model=schemas.TaskRead)
@@ -168,7 +139,7 @@ def reopen_task(task_id: str, db: Session = Depends(get_db), user: models.User =
         task.status = TaskStatus.TODO
         db.commit()
         db.refresh(task)
-    return enrich_task(task)
+    return enrich_task(db, task)
 
 
 @router.delete("/{task_id}", status_code=204)
@@ -186,7 +157,7 @@ def restore(task_id: str, db: Session = Depends(get_db), user: models.User = Dep
     restore_task(db, task)
     db.commit()
     db.refresh(task)
-    return enrich_task(task)
+    return enrich_task(db, task)
 
 
 @router.get("/{task_id}/logs", response_model=list[schemas.TaskLogRead])

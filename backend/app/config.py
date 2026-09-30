@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # des virgules. Vide par défaut : le frontend passe par le proxy /api.
     CORS_ORIGINS: str = ""
 
+    # Fuseau horaire servant à déterminer « aujourd'hui » (présence, relances).
+    TIMEZONE: str = "Europe/Paris"
+
     @model_validator(mode="after")
     def _refuse_insecure_production(self):
         if self.ENVIRONMENT == "production" and (
