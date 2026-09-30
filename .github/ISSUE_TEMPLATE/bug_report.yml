@@ -1,0 +1,48 @@
+name: Signaler un bug
+description: Quelque chose ne fonctionne pas comme prévu.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce problème.
+        **Une faille de sécurité ne se signale pas ici** : voir SECURITY.md.
+        N'incluez aucune donnée réelle (noms, emails de clients…).
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Que se passe-t-il, et qu'attendiez-vous ?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      placeholder: |
+        1. Aller sur…
+        2. Cliquer sur…
+        3. Constater…
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version ou commit
+      placeholder: "v1.0.0 ou abc1234"
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environnement
+      options:
+        - Docker (développement)
+        - Docker (production)
+        - Installation locale sans Docker
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Journaux ou captures
+      description: Messages d'erreur de la console du navigateur ou de `docker compose logs`.
+      render: shell
