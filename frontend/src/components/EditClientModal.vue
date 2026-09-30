@@ -19,6 +19,7 @@
           </div>
           <button
             class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"
+            aria-label="Fermer"
             @click="$emit('close')"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,10 +62,14 @@
           <!-- First + Last name -->
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                for="edit-client-field-1"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
                 Prénom <span class="text-red-500">*</span>
               </label>
               <input
+                id="edit-client-field-1"
                 v-model="form.first_name"
                 required
                 type="text"
@@ -72,10 +77,14 @@
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                for="edit-client-field-2"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
                 Nom <span class="text-slate-400 font-normal text-xs">(optionnel)</span>
               </label>
               <input
+                id="edit-client-field-2"
                 v-model="form.last_name"
                 type="text"
                 class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
@@ -85,8 +94,13 @@
 
           <!-- Email -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+            <label
+              for="edit-client-field-3"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >Email</label
+            >
             <input
+              id="edit-client-field-3"
               v-model="form.email"
               type="email"
               class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 placeholder-slate-400"
@@ -94,26 +108,11 @@
             />
           </div>
 
-          <!-- Absence end date -->
-          <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Absent jusqu'au
-              <span class="text-slate-400 font-normal text-xs">(optionnel)</span>
-            </label>
-            <input
-              v-model="form.absence_end_date"
-              type="date"
-              class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-            />
-            <button
-              v-if="form.absence_end_date"
-              type="button"
-              class="mt-1 text-xs text-slate-400 hover:text-red-500 transition-colors"
-              @click="form.absence_end_date = ''"
-            >
-              ✕ Supprimer l'absence
-            </button>
-          </div>
+          <AbsencePeriodFields
+            v-model:start="form.absence_start_date"
+            v-model:end="form.absence_end_date"
+            id-prefix="edit-client-absence"
+          />
 
           <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
 
@@ -132,7 +131,9 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { errorMessage } from '../api/index.js'
 import { useClientStore } from '../stores/clientStore.js'
+import AbsencePeriodFields from './AbsencePeriodFields.vue'
 
 const props = defineProps({ client: { type: Object, required: true } })
 const emit = defineEmits(['close', 'updated'])
@@ -143,6 +144,7 @@ const form = reactive({
   first_name: props.client.first_name,
   last_name: props.client.last_name ?? '',
   email: props.client.email ?? '',
+  absence_start_date: props.client.absence_start_date ?? '',
   absence_end_date: props.client.absence_end_date ?? '',
 })
 
@@ -161,9 +163,9 @@ async function saveCompany() {
     setTimeout(() => {
       companySaved.value = false
     }, 2000)
-  } catch {
+  } catch (e) {
     companyName.value = props.client.company.name
-    error.value = "Ce nom d'entreprise existe déjà."
+    error.value = errorMessage(e, "Ce nom d'entreprise existe déjà.")
   } finally {
     savingCompany.value = false
   }
@@ -173,14 +175,18 @@ async function submit() {
   submitting.value = true
   error.value = ''
   try {
-    const payload = { first_name: form.first_name }
-    if (form.last_name) payload.last_name = form.last_name
-    if (form.email) payload.email = form.email
-    payload.absence_end_date = form.absence_end_date || null
+    // Champ vidé = valeur effacée (null), pas ignorée.
+    const payload = {
+      first_name: form.first_name,
+      last_name: form.last_name || null,
+      email: form.email || null,
+      absence_start_date: form.absence_start_date || null,
+      absence_end_date: form.absence_end_date || null,
+    }
     const updated = await clientStore.updateClient(props.client.id, payload)
     emit('updated', updated)
-  } catch {
-    error.value = 'Erreur lors de la modification. Veuillez réessayer.'
+  } catch (e) {
+    error.value = errorMessage(e, 'Erreur lors de la modification. Veuillez réessayer.')
   } finally {
     submitting.value = false
   }

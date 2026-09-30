@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { clientsApi, companiesApi } from '../api/index.js'
+import { fullName, presenceColor, presenceLabel } from '../utils/labels.js'
+
+const byName = (a, b) => a.name.localeCompare(b.name)
 
 export const useClientStore = defineStore('clients', () => {
   const clients = ref([])
@@ -10,86 +13,73 @@ export const useClientStore = defineStore('clients', () => {
   async function fetchClients() {
     loading.value = true
     try {
-      const res = await clientsApi.getAll()
-      clients.value = res.data
+      clients.value = (await clientsApi.getAll()).data
     } finally {
       loading.value = false
     }
   }
 
   async function fetchCompanies() {
-    const res = await companiesApi.getAll()
-    companies.value = res.data
+    companies.value = (await companiesApi.getAll()).data
+  }
+
+  async function fetchAll() {
+    await Promise.all([fetchClients(), fetchCompanies()])
   }
 
   async function createCompany(name) {
-    const res = await companiesApi.create({ name })
-    companies.value.push(res.data)
-    companies.value.sort((a, b) => a.name.localeCompare(b.name))
-    return res.data
+    const company = (await companiesApi.create({ name })).data
+    companies.value = [...companies.value, company].sort(byName)
+    return company
   }
 
   async function createClient(data) {
-    const res = await clientsApi.create(data)
-    clients.value.push(res.data)
-    return res.data
+    const client = (await clientsApi.create(data)).data
+    clients.value.push(client)
+    return client
   }
 
   async function updateClient(id, data) {
-    const res = await clientsApi.update(id, data)
+    const client = (await clientsApi.update(id, data)).data
     const idx = clients.value.findIndex((c) => c.id === id)
-    if (idx !== -1) clients.value[idx] = res.data
-    return res.data
+    if (idx !== -1) clients.value[idx] = client
+    return client
   }
 
-  async function deleteClient(id) {
-    await clientsApi.delete(id)
+  async function editCompany(id, name) {
+    const company = (await companiesApi.update(id, { name })).data
+    const idx = companies.value.findIndex((c) => c.id === id)
+    if (idx !== -1) companies.value[idx] = company
+    // Le nom de l'entreprise est embarqué dans chaque client
+    clients.value = clients.value.map((c) => (c.company_id === id ? { ...c, company } : c))
+    return company
+  }
+
+  // Archiver est réversible : restore* réactive ce qui a été archivé ensemble.
+  async function archiveClient(id) {
+    await clientsApi.archive(id)
     clients.value = clients.value.filter((c) => c.id !== id)
   }
 
-  async function deleteCompany(id) {
-    await companiesApi.delete(id)
+  async function restoreClient(id) {
+    await clientsApi.restore(id)
+    await fetchClients()
+  }
+
+  async function archiveCompany(id) {
+    await companiesApi.archive(id)
     companies.value = companies.value.filter((c) => c.id !== id)
     clients.value = clients.value.filter((c) => c.company_id !== id)
   }
 
-  async function editCompany(id, name) {
-    const res = await companiesApi.update(id, { name })
-    const idx = companies.value.findIndex((c) => c.id === id)
-    if (idx !== -1) companies.value[idx] = res.data
-    // Rafraîchir les clients (leur company.name est embarqué)
-    clients.value = clients.value.map((c) => (c.company_id === id ? { ...c, company: res.data } : c))
-    return res.data
+  async function restoreCompany(id) {
+    await companiesApi.restore(id)
+    await fetchAll()
   }
 
-  // ─── Helpers ───────────────────────────────────────────────────────────────
-
-  function presenceColor(status) {
-    return (
-      {
-        PRESENT: 'bg-green-500',
-        ABSENT: 'bg-red-500',
-        SOON_BACK: 'bg-yellow-400',
-        RECENTLY_BACK: 'bg-blue-500',
-      }[status] ?? 'bg-slate-400'
-    )
-  }
-
-  function presenceLabel(status) {
-    return (
-      {
-        PRESENT: '🟢 Présent',
-        ABSENT: '🔴 Absent',
-        SOON_BACK: '🟡 Bientôt de retour',
-        RECENTLY_BACK: '🔵 Rentré récemment',
-      }[status] ?? 'Inconnu'
-    )
-  }
-
-  /** Retourne "Prénom Nom" ou juste "Prénom" si pas de nom */
-  function fullName(client) {
-    if (!client) return ''
-    return [client.first_name, client.last_name].filter(Boolean).join(' ')
+  function reset() {
+    clients.value = []
+    companies.value = []
   }
 
   return {
@@ -98,12 +88,17 @@ export const useClientStore = defineStore('clients', () => {
     loading,
     fetchClients,
     fetchCompanies,
+    fetchAll,
     createCompany,
     createClient,
     updateClient,
     editCompany,
-    deleteClient,
-    deleteCompany,
+    archiveClient,
+    restoreClient,
+    archiveCompany,
+    restoreCompany,
+    reset,
+    // Aides d'affichage, conservées ici pour les composants existants
     presenceColor,
     presenceLabel,
     fullName,

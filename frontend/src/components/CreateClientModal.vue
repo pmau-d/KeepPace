@@ -18,6 +18,7 @@
         </div>
         <button
           class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 transition-colors"
+          aria-label="Fermer"
           @click="$emit('close')"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,10 +31,14 @@
       <form class="px-6 py-5 space-y-4" @submit.prevent="submit">
         <!-- Company autocomplete -->
         <div class="relative">
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <label
+            for="new-client-field-1"
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+          >
             Entreprise <span class="text-red-500">*</span>
           </label>
           <input
+            id="new-client-field-1"
             v-model="companySearch"
             type="text"
             required
@@ -75,10 +80,14 @@
         <!-- First + Last name -->
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              for="new-client-field-2"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
               Prénom <span class="text-red-500">*</span>
             </label>
             <input
+              id="new-client-field-2"
               v-model="form.first_name"
               required
               type="text"
@@ -86,11 +95,15 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              for="new-client-field-3"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
               Nom
               <span class="text-slate-400 font-normal text-xs">(optionnel)</span>
             </label>
             <input
+              id="new-client-field-3"
               v-model="form.last_name"
               type="text"
               class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
@@ -100,8 +113,13 @@
 
         <!-- Email -->
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+          <label
+            for="new-client-field-4"
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >Email</label
+          >
           <input
+            id="new-client-field-4"
             v-model="form.email"
             type="email"
             class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 placeholder-slate-400"
@@ -109,19 +127,11 @@
           />
         </div>
 
-        <!-- Absence end date -->
-        <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Absent jusqu'au
-            <span class="text-slate-400 font-normal">(optionnel)</span>
-          </label>
-          <input
-            v-model="form.absence_end_date"
-            type="date"
-            class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-          />
-          <p class="text-xs text-slate-400 mt-1">Laissez vide si le client est actuellement disponible.</p>
-        </div>
+        <AbsencePeriodFields
+          v-model:start="form.absence_start_date"
+          v-model:end="form.absence_end_date"
+          id-prefix="new-client-absence"
+        />
 
         <!-- Error -->
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
@@ -141,7 +151,9 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
+import { errorMessage } from '../api/index.js'
 import { useClientStore } from '../stores/clientStore.js'
+import AbsencePeriodFields from './AbsencePeriodFields.vue'
 
 const emit = defineEmits(['close', 'created'])
 const clientStore = useClientStore()
@@ -149,6 +161,7 @@ const form = reactive({
   first_name: '',
   last_name: '',
   email: '',
+  absence_start_date: '',
   absence_end_date: '',
   company_id: '',
 })
@@ -219,11 +232,12 @@ async function submit() {
     }
     if (form.last_name) payload.last_name = form.last_name
     if (form.email) payload.email = form.email
+    if (form.absence_start_date) payload.absence_start_date = form.absence_start_date
     if (form.absence_end_date) payload.absence_end_date = form.absence_end_date
     const client = await clientStore.createClient(payload)
     emit('created', client)
-  } catch {
-    error.value = 'Erreur lors de la création du client. Veuillez réessayer.'
+  } catch (e) {
+    error.value = errorMessage(e, 'Erreur lors de la création du client. Veuillez réessayer.')
   } finally {
     submitting.value = false
   }

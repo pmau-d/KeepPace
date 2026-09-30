@@ -32,6 +32,7 @@
           </h2>
           <button
             class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 transition-colors"
+            aria-label="Fermer"
             @click="$emit('close')"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,10 +50,14 @@
         <form class="px-6 py-5 space-y-4 max-h-[80vh] overflow-y-auto" @submit.prevent="submit">
           <!-- Title -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              for="new-task-field-1"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
               Titre <span class="text-red-500">*</span>
             </label>
             <input
+              id="new-task-field-1"
               v-model="form.title"
               required
               type="text"
@@ -64,10 +69,13 @@
 
           <!-- Description -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            <label
+              for="new-task-field-2"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
               >Description</label
             >
             <textarea
+              id="new-task-field-2"
               v-model="form.description"
               rows="2"
               class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 resize-none placeholder-slate-400"
@@ -77,11 +85,15 @@
 
           <!-- Client autocomplete -->
           <div ref="clientDropdownRef" class="relative">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              for="new-task-field-3"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
               Client <span class="text-red-500">*</span>
             </label>
             <div class="relative">
               <input
+                id="new-task-field-3"
                 v-model="clientSearch"
                 type="text"
                 :class="[
@@ -143,10 +155,13 @@
           <!-- Priority + Status -->
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              <label
+                for="new-task-field-4"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >Priorité</label
               >
               <select
+                id="new-task-field-4"
                 v-model="form.priority"
                 class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
               >
@@ -156,8 +171,13 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Statut</label>
+              <label
+                for="new-task-field-5"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                >Statut</label
+              >
               <select
+                id="new-task-field-5"
                 v-model="form.status"
                 class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
               >
@@ -170,10 +190,14 @@
 
           <!-- Due date -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label
+              for="new-task-field-6"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
               Date d'échéance
             </label>
             <input
+              id="new-task-field-6"
               v-model="form.due_date"
               type="date"
               class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
@@ -218,6 +242,8 @@
 import { ref, reactive, computed } from 'vue'
 import { useClientStore } from '../stores/clientStore.js'
 import { useTaskStore } from '../stores/taskStore.js'
+import { useToastStore } from '../stores/toast.js'
+import { errorMessage } from '../api/index.js'
 import CreateClientModal from './CreateClientModal.vue'
 
 const props = defineProps({ prefill: { type: Object, default: null } })
@@ -225,6 +251,7 @@ const emit = defineEmits(['close'])
 
 const clientStore = useClientStore()
 const taskStore = useTaskStore()
+const toast = useToastStore()
 
 const form = reactive({
   title: props.prefill ? `(Copie) ${props.prefill.title}` : '',
@@ -292,9 +319,10 @@ async function submit() {
     if (!payload.due_date) delete payload.due_date
     if (!payload.description) delete payload.description
     await taskStore.createTask(payload)
+    toast.success(props.prefill ? 'Tâche dupliquée.' : 'Tâche créée.')
     emit('close')
-  } catch {
-    error.value = 'Erreur lors de la création de la tâche. Veuillez réessayer.'
+  } catch (e) {
+    error.value = errorMessage(e, 'Erreur lors de la création de la tâche. Veuillez réessayer.')
   } finally {
     submitting.value = false
   }
