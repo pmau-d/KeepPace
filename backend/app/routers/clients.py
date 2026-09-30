@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database import get_db
+
 from app import models, schemas
+from app.database import get_db
 from app.utils import enrich_client
 
 router = APIRouter(prefix="/clients", tags=["clients"])
-
 
 
 @router.get("/", response_model=list[schemas.ClientRead])

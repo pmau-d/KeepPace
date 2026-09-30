@@ -22,3 +22,9 @@ Thumbs.db
 .idea/
 .vscode/
 
+
+# Outillage
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage/
