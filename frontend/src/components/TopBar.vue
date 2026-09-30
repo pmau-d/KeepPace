@@ -102,22 +102,23 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
-import { tasksApi } from '../api/index.js'
-import { useTaskStore } from '../stores/taskStore.js'
-import { PRESENCE, STATUS_LABELS } from '../utils/labels.js'
+import { tasksApi } from '../api/index'
+import { useTaskStore } from '../stores/taskStore'
+import { PRESENCE, STATUS_LABELS } from '../utils/labels'
+import type { PresenceStatus, TaskStatus } from '../types/api'
 
-defineEmits(['open-create'])
+defineEmits<{ 'open-create': [] }>()
 
 const taskStore = useTaskStore()
 
 const searchQuery = ref(taskStore.filters.search)
-const statusFilter = ref(taskStore.filters.status || '')
-const presenceFilter = ref(taskStore.filters.presenceStatus || '')
+const statusFilter = ref<TaskStatus | ''>(taskStore.filters.status || '')
+const presenceFilter = ref<PresenceStatus | ''>(taskStore.filters.presenceStatus || '')
 const exportUrl = computed(() => tasksApi.exportUrl(taskStore.queryParams()))
 
-let searchTimeout = null
+let searchTimeout: ReturnType<typeof setTimeout> | undefined
 
 function handleSearch() {
   clearTimeout(searchTimeout)

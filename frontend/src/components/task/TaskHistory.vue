@@ -35,18 +35,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
-import { tasksApi } from '../../api/index.js'
-import { fieldLabel, formatDateTime, formatLogValue } from '../../utils/labels.js'
+import { tasksApi } from '../../api/index'
+import { fieldLabel, formatDateTime, formatLogValue } from '../../utils/labels'
+import type { TaskLog } from '../../types/api'
 
-const props = defineProps({
-  taskId: { type: String, required: true },
-  // Changé par le parent pour forcer un rechargement après une modification
-  version: { type: Number, default: 0 },
-})
+const props = withDefaults(
+  defineProps<{
+    taskId: string
+    /** Changé par le parent pour forcer un rechargement après une modification. */
+    version?: number
+  }>(),
+  { version: 0 },
+)
 
-const logs = ref([])
+const logs = ref<TaskLog[]>([])
 const loading = ref(false)
 
 async function load() {

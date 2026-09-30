@@ -1,26 +1,43 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { tasksApi } from '../api/index.js'
+import { tasksApi } from '../api/index'
+import type {
+  PresenceStatus,
+  Task,
+  TaskCreatePayload,
+  TaskQuery,
+  TaskStatus,
+  TaskSummary,
+  TaskUpdatePayload,
+} from '../types/api'
 
 export const PAGE_SIZE = 50
 
-function defaultFilters() {
+export interface TaskFilters {
+  clientId: string | null
+  status: TaskStatus | null
+  presenceStatus: PresenceStatus | null
+  showDone: boolean
+  search: string
+}
+
+function defaultFilters(): TaskFilters {
   return { clientId: null, status: null, presenceStatus: null, showDone: false, search: '' }
 }
 
 export const useTaskStore = defineStore('tasks', () => {
-  const tasks = ref([])
+  const tasks = ref<TaskSummary[]>([])
   const total = ref(0)
   const loading = ref(false)
   const loadingMore = ref(false)
-  const filters = ref(defaultFilters())
+  const filters = ref<TaskFilters>(defaultFilters())
   const hasMore = computed(() => tasks.value.length < total.value)
   // Évite qu'une réponse lente écrase le résultat d'une recherche plus récente
   let requestId = 0
 
-  function queryParams() {
+  function queryParams(): TaskQuery {
     const f = filters.value
-    const params = {}
+    const params: TaskQuery = {}
     if (f.clientId) params.client_id = f.clientId
     if (f.status) params.status = f.status
     if (f.presenceStatus) params.presence_status = f.presenceStatus
@@ -56,7 +73,7 @@ export const useTaskStore = defineStore('tasks', () => {
   }
 
   /** Met à jour la tâche dans la liste, ou l'en retire si elle ne correspond plus aux filtres. */
-  function syncInList(task) {
+  function syncInList(task: TaskSummary) {
     const idx = tasks.value.findIndex((t) => t.id === task.id)
     if (idx === -1) return
     if (task.status === 'DONE' && !filters.value.showDone) {
@@ -67,54 +84,54 @@ export const useTaskStore = defineStore('tasks', () => {
     }
   }
 
-  async function fetchTask(id) {
+  async function fetchTask(id: string): Promise<Task> {
     return (await tasksApi.get(id)).data
   }
 
-  async function createTask(data) {
+  async function createTask(data: TaskCreatePayload) {
     const task = (await tasksApi.create(data)).data
     // Recharger pour respecter le tri et les filtres serveur
     await fetchTasks()
     return task
   }
 
-  async function updateTask(id, data) {
+  async function updateTask(id: string, data: TaskUpdatePayload) {
     const task = (await tasksApi.update(id, data)).data
     syncInList(task)
     return task
   }
 
-  async function closeTask(id) {
+  async function closeTask(id: string) {
     const task = (await tasksApi.close(id)).data
     syncInList(task)
     return task
   }
 
-  async function reopenTask(id) {
+  async function reopenTask(id: string) {
     const task = (await tasksApi.reopen(id)).data
     syncInList(task)
     return task
   }
 
-  async function archiveTask(id) {
+  async function archiveTask(id: string) {
     await tasksApi.archive(id)
     const before = tasks.value.length
     tasks.value = tasks.value.filter((t) => t.id !== id)
     total.value -= before - tasks.value.length
   }
 
-  async function restoreTask(id) {
+  async function restoreTask(id: string) {
     const task = (await tasksApi.restore(id)).data
     await fetchTasks()
     return task
   }
 
-  function setFilter(key, value) {
+  function setFilter<K extends keyof TaskFilters>(key: K, value: TaskFilters[K]) {
     filters.value[key] = value
     return fetchTasks()
   }
 
-  function setClientFilter(clientId) {
+  function setClientFilter(clientId: string | null) {
     filters.value.clientId = filters.value.clientId === clientId ? null : clientId
     return fetchTasks()
   }

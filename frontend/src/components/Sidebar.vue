@@ -168,17 +168,31 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EditClientModal from './EditClientModal.vue'
-import { confirm } from '../composables/useConfirm.js'
-import { useDarkMode } from '../composables/useDarkMode.js'
-import { useAuthStore } from '../stores/auth.js'
-import { useClientStore } from '../stores/clientStore.js'
-import { useTaskStore } from '../stores/taskStore.js'
-import { useToastStore } from '../stores/toast.js'
-import { PRESENCE, fullName, presenceColor, presenceLabel } from '../utils/labels.js'
+import { confirm } from '../composables/useConfirm'
+import { useDarkMode } from '../composables/useDarkMode'
+import { useAuthStore } from '../stores/auth'
+import { useClientStore } from '../stores/clientStore'
+import { useTaskStore } from '../stores/taskStore'
+import { useToastStore } from '../stores/toast'
+import { PRESENCE, fullName, presenceColor, presenceLabel } from '../utils/labels'
+import type { Client } from '../types/api'
+
+interface NavItem {
+  name: string
+  label: string
+  icon: string
+  matches: string[]
+}
+
+interface CompanyGroup {
+  companyId: string
+  name: string
+  clients: Client[]
+}
 
 const auth = useAuthStore()
 const clientStore = useClientStore()
@@ -188,9 +202,9 @@ const route = useRoute()
 const router = useRouter()
 const { isDark, toggle: toggleDark } = useDarkMode()
 
-const editingClient = ref(null)
+const editingClient = ref<Client | null>(null)
 
-const navigation = [
+const navigation: NavItem[] = [
   { name: 'tasks', label: 'Toutes les tâches', icon: '☰', matches: ['tasks', 'task'] },
   { name: 'follow-up', label: 'À relancer', icon: '📣', matches: ['follow-up'] },
   { name: 'archives', label: 'Archives', icon: '🗄️', matches: ['archives'] },
@@ -204,32 +218,35 @@ const icons = {
   logout: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
 }
 
-function isActive(item) {
-  return item.matches.includes(route.name) && !(item.name === 'tasks' && taskStore.filters.clientId)
+function isActive(item: NavItem) {
+  return item.matches.includes(String(route.name)) && !(item.name === 'tasks' && taskStore.filters.clientId)
 }
 
 const groupedClients = computed(() => {
-  const groups = new Map()
+  const groups = new Map<string, CompanyGroup>()
   for (const client of clientStore.clients) {
-    if (!groups.has(client.company_id)) {
-      groups.set(client.company_id, { companyId: client.company_id, name: client.company.name, clients: [] })
+    let group = groups.get(client.company_id)
+    if (!group) {
+      group = { companyId: client.company_id, name: client.company.name, clients: [] }
+      groups.set(client.company_id, group)
     }
-    groups.get(client.company_id).clients.push(client)
+    group.clients.push(client)
   }
   for (const group of groups.values()) group.clients.sort((a, b) => fullName(a).localeCompare(fullName(b)))
   return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name))
 })
 
-async function selectClient(clientId) {
+async function selectClient(clientId: string | null) {
   if (route.name !== 'tasks' && route.name !== 'task') await router.push({ name: 'tasks' })
   await taskStore.setClientFilter(clientId)
 }
 
-function clearClientFilterIf(clientIds) {
-  if (clientIds.includes(taskStore.filters.clientId)) taskStore.filters.clientId = null
+function clearClientFilterIf(clientIds: string[]) {
+  if (taskStore.filters.clientId && clientIds.includes(taskStore.filters.clientId))
+    taskStore.filters.clientId = null
 }
 
-async function handleArchiveClient(client) {
+async function handleArchiveClient(client: Client) {
   const ok = await confirm({
     title: `Archiver ${fullName(client)} ?`,
     message:
@@ -252,7 +269,7 @@ async function handleArchiveClient(client) {
   })
 }
 
-async function handleArchiveCompany(group) {
+async function handleArchiveCompany(group: CompanyGroup) {
   const ok = await confirm({
     title: `Archiver l'entreprise « ${group.name} » ?`,
     message: `Ses ${group.clients.length} client(s) et leurs tâches seront archivés, sans perte d'historique.`,

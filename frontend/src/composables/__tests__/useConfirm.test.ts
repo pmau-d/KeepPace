@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { confirm, useConfirmDialog } from '../useConfirm.js'
+import { confirm, useConfirmDialog } from '../useConfirm'
 
 describe('confirm', () => {
   it('se résout selon le choix', async () => {

@@ -39,12 +39,12 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { useConfirmDialog } from '../composables/useConfirm.js'
+import { useConfirmDialog } from '../composables/useConfirm'
 
 const { state, accept, cancel } = useConfirmDialog()
-const cancelButton = ref(null)
+const cancelButton = ref<HTMLButtonElement | null>(null)
 const titleId = 'confirm-dialog-title'
 
 // Focus sur « Annuler » : une validation par Entrée ne détruit rien par erreur.

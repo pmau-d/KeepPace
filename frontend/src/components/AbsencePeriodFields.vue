@@ -14,7 +14,7 @@
           type="date"
           :max="end || undefined"
           :class="inputClass"
-          @input="$emit('update:start', $event.target.value)"
+          @input="$emit('update:start', ($event.target as HTMLInputElement).value)"
         />
       </div>
       <div>
@@ -27,7 +27,7 @@
           type="date"
           :min="start || undefined"
           :class="inputClass"
-          @input="$emit('update:end', $event.target.value)"
+          @input="$emit('update:end', ($event.target as HTMLInputElement).value)"
         />
       </div>
     </div>
@@ -45,13 +45,13 @@
   </fieldset>
 </template>
 
-<script setup>
-defineProps({
-  start: { type: String, default: '' },
-  end: { type: String, default: '' },
-  idPrefix: { type: String, default: 'absence' },
+<script setup lang="ts">
+withDefaults(defineProps<{ start?: string; end?: string; idPrefix?: string }>(), {
+  start: '',
+  end: '',
+  idPrefix: 'absence',
 })
-const emit = defineEmits(['update:start', 'update:end'])
+const emit = defineEmits<{ 'update:start': [value: string]; 'update:end': [value: string] }>()
 
 const inputClass =
   'w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500'

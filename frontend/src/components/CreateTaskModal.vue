@@ -238,22 +238,30 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
-import { useClientStore } from '../stores/clientStore.js'
-import { useTaskStore } from '../stores/taskStore.js'
-import { useToastStore } from '../stores/toast.js'
-import { errorMessage } from '../api/index.js'
+import { useClientStore } from '../stores/clientStore'
+import { useTaskStore } from '../stores/taskStore'
+import { useToastStore } from '../stores/toast'
+import { errorMessage } from '../api/index'
 import CreateClientModal from './CreateClientModal.vue'
+import type { Client, TaskCreatePayload, TaskPriority, TaskStatus, TaskSummary } from '../types/api'
 
-const props = defineProps({ prefill: { type: Object, default: null } })
-const emit = defineEmits(['close'])
+const props = withDefaults(defineProps<{ prefill?: TaskSummary | null }>(), { prefill: null })
+const emit = defineEmits<{ close: [] }>()
 
 const clientStore = useClientStore()
 const taskStore = useTaskStore()
 const toast = useToastStore()
 
-const form = reactive({
+const form = reactive<{
+  title: string
+  description: string
+  client_id: string
+  priority: TaskPriority
+  status: TaskStatus
+  due_date: string
+}>({
   title: props.prefill ? `(Copie) ${props.prefill.title}` : '',
   description: props.prefill?.description ?? '',
   client_id: props.prefill?.client?.id ?? '',
@@ -280,7 +288,7 @@ const filteredClients = computed(() => {
     .slice(0, 8)
 })
 
-function selectClient(client) {
+function selectClient(client: Client) {
   form.client_id = client.id
   clientSearch.value = `${clientStore.fullName(client)} · ${client.company.name}`
   showClientDropdown.value = false
@@ -302,7 +310,7 @@ function openCreateClient() {
   showCreateClientModal.value = true
 }
 
-function onClientCreated(client) {
+function onClientCreated(client: Client) {
   showCreateClientModal.value = false
   selectClient(client)
 }
@@ -315,9 +323,14 @@ async function submit() {
   submitting.value = true
   error.value = ''
   try {
-    const payload = { ...form }
-    if (!payload.due_date) delete payload.due_date
-    if (!payload.description) delete payload.description
+    const payload: TaskCreatePayload = {
+      client_id: form.client_id,
+      title: form.title,
+      priority: form.priority,
+      status: form.status,
+    }
+    if (form.due_date) payload.due_date = form.due_date
+    if (form.description) payload.description = form.description
     await taskStore.createTask(payload)
     toast.success(props.prefill ? 'Tâche dupliquée.' : 'Tâche créée.')
     emit('close')
