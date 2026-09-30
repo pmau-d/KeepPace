@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+from app.archive import archive_company, restore_company
 from app.database import get_db
 from app.deps import get_current_user
 from app.repository import get_company, owned
@@ -17,8 +18,10 @@ def _name_taken(db: Session, user: models.User, name: str, exclude_id: str | Non
 
 
 @router.get("/", response_model=list[schemas.CompanyRead])
-def get_companies(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    return owned(db, models.Company, user).order_by(models.Company.name).all()
+def get_companies(
+    archived: bool = False, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+):
+    return owned(db, models.Company, user, archived=archived).order_by(models.Company.name).all()
 
 
 @router.post("/", response_model=schemas.CompanyRead, status_code=201)
@@ -61,11 +64,17 @@ def update_company(
 def delete_company(
     company_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
 ):
-    company = get_company(db, company_id, user)
-    # Cascade: supprimer clients → tâches → logs
-    for client in list(company.clients):
-        for task in list(client.tasks):
-            db.delete(task)
-        db.delete(client)
-    db.delete(company)
+    """Archive l'entreprise, ses clients et leurs tâches (réversible)."""
+    archive_company(db, get_company(db, company_id, user))
     db.commit()
+
+
+@router.post("/{company_id}/restore", response_model=schemas.CompanyRead)
+def restore(company_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    company = get_company(db, company_id, user, archived=True)
+    if _name_taken(db, user, company.name):
+        raise HTTPException(status_code=409, detail="Une entreprise active porte déjà ce nom")
+    restore_company(db, company)
+    db.commit()
+    db.refresh(company)
+    return company

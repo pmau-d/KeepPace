@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, Date, Enum, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, Column, Date, Enum, ForeignKey, Index, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -44,13 +44,18 @@ def _owner_column():
     return Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
 
 
+def _archived_column():
+    # Archivage plutôt que suppression : l'historique des tâches est conservé.
+    return Column(UTCDateTime, nullable=True)
+
+
 class Company(Base):
     __tablename__ = "companies"
-    __table_args__ = (UniqueConstraint("owner_id", "name", name="uq_companies_owner_name"),)
 
     id = Column(String, primary_key=True, default=gen_uuid)
     owner_id = _owner_column()
     name = Column(String, nullable=False)
+    archived_at = _archived_column()
 
     clients = relationship("Client", back_populates="company")
 
@@ -66,8 +71,15 @@ class Client(Base):
     email = Column(String, nullable=True)
     absence_end_date = Column(Date, nullable=True)
 
+    archived_at = _archived_column()
+
     company = relationship("Company", back_populates="clients")
     tasks = relationship("Task", back_populates="client")
+
+    @property
+    def display_name(self) -> str:
+        name = " ".join(part for part in (self.first_name, self.last_name) if part)
+        return f"{name} · {self.company.name}" if self.company else name
 
 
 class Task(Base):
@@ -86,6 +98,7 @@ class Task(Base):
     updated_at = Column(
         UTCDateTime, nullable=False, default=utcnow, server_default=func.now(), onupdate=utcnow
     )
+    archived_at = _archived_column()
 
     client = relationship("Client", back_populates="tasks")
     logs = relationship(
@@ -115,7 +128,23 @@ class TaskLog(Base):
     field_changed = Column(String, nullable=False)
     old_value = Column(Text, nullable=True)
     new_value = Column(Text, nullable=True)
+    # Libellés lisibles figés au moment du changement (ex. nom du client), pour
+    # que l'historique reste compréhensible même si l'objet est renommé.
+    old_label = Column(Text, nullable=True)
+    new_label = Column(Text, nullable=True)
     comment = Column(Text, nullable=True)
     created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
 
     task = relationship("Task", back_populates="logs")
+
+
+# Nom d'entreprise unique par compte parmi les entreprises actives : une
+# entreprise archivée ne bloque pas la création d'une homonyme.
+Index(
+    "uq_companies_owner_name_active",
+    Company.owner_id,
+    Company.name,
+    unique=True,
+    postgresql_where=Company.archived_at.is_(None),
+    sqlite_where=Company.archived_at.is_(None),
+)
