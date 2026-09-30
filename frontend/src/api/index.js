@@ -39,5 +39,3 @@ export const tasksApi = {
 export const adminApi = {
   reset: () => api.delete('/admin/reset'),
 }
-
-
