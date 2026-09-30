@@ -79,12 +79,23 @@ def test_legacy_database_is_upgraded_without_data_loss(engine):
     with engine.begin() as conn:
         for statement in LEGACY_SCHEMA:
             conn.execute(text(statement))
-        conn.execute(text("INSERT INTO companies VALUES ('co', 'Acme')"))
-        conn.execute(text("INSERT INTO clients VALUES ('cl', 'co', 'Alice', 'Martin', NULL, NULL)"))
+        conn.execute(text("INSERT INTO companies VALUES ('co', 'Acme'), ('co2', 'Globex')"))
+        conn.execute(
+            text(
+                "INSERT INTO clients VALUES ('cl', 'co', 'Alice', 'Martin', NULL, NULL), "
+                "('cl2', 'co2', 'Bob', '', NULL, NULL)"
+            )
+        )
         conn.execute(
             text(
                 "INSERT INTO tasks (id, client_id, title, status, priority) "
                 "VALUES ('t1', 'cl', 'Relancer', 'IN_PROGRESS', 'HIGH'), ('t2', 'cl', 'Vieux', 'WEIRD', '??')"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO task_logs (id, task_id, field_changed, old_value, new_value) "
+                "VALUES ('l1', 't1', 'client_id', 'cl2', 'cl')"
             )
         )
 
@@ -96,3 +107,5 @@ def test_legacy_database_is_upgraded_without_data_loss(engine):
         columns = {c["name"]: c for c in inspect(conn).get_columns("clients")}
         assert columns["last_name"]["nullable"]
         assert inspect(conn).has_table("task_comments")
+        labels = conn.execute(text("SELECT old_label, new_label FROM task_logs WHERE id = 'l1'")).one()
+        assert tuple(labels) == ("Bob · Globex", "Alice Martin · Acme")

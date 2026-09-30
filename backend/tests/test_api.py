@@ -71,3 +71,62 @@ def test_timestamps_are_timezone_aware(client):
     customer = make_client(client)
     task = client.post("/tasks/", json={"client_id": customer["id"], "title": "x"}).json()
     assert task["created_at"].endswith(("Z", "+00:00"))
+
+
+def test_deleting_a_task_archives_it_and_keeps_history(client):
+    customer = make_client(client)
+    task = client.post("/tasks/", json={"client_id": customer["id"], "title": "Relancer"}).json()
+    assert client.delete(f"/tasks/{task['id']}").status_code == 204
+
+    assert client.get("/tasks/").json() == []
+    assert client.get(f"/tasks/{task['id']}").status_code == 404
+    assert [t["id"] for t in client.get("/tasks/", params={"archived": True}).json()] == [task["id"]]
+    logs = client.get(f"/tasks/{task['id']}/logs").json()
+    assert logs[-1]["field_changed"] == "archived"
+
+    restored = client.post(f"/tasks/{task['id']}/restore")
+    assert restored.status_code == 200
+    assert [t["id"] for t in client.get("/tasks/").json()] == [task["id"]]
+
+
+def test_archiving_a_company_cascades_and_restores_only_what_it_archived(client):
+    alice = make_client(client, company="Acme", first_name="Alice")
+    bob = client.post("/clients/", json={"company_id": alice["company_id"], "first_name": "Bob"}).json()
+    kept = client.post("/tasks/", json={"client_id": alice["id"], "title": "Garder"}).json()
+    old = client.post("/tasks/", json={"client_id": alice["id"], "title": "Déjà archivée"}).json()
+    client.delete(f"/tasks/{old['id']}")
+    client.delete(f"/clients/{bob['id']}")
+
+    assert client.delete(f"/companies/{alice['company_id']}").status_code == 204
+    assert client.get("/clients/").json() == []
+    assert client.get("/tasks/").json() == []
+    assert client.post(f"/clients/{alice['id']}/restore").status_code == 409
+
+    assert client.post(f"/companies/{alice['company_id']}/restore").status_code == 200
+    assert [c["first_name"] for c in client.get("/clients/").json()] == ["Alice"]
+    assert [t["id"] for t in client.get("/tasks/").json()] == [kept["id"]]
+
+
+def test_archived_company_name_can_be_reused(client):
+    company = client.post("/companies/", json={"name": "Acme"}).json()
+    client.delete(f"/companies/{company['id']}")
+    assert client.post("/companies/", json={"name": "Acme"}).status_code == 201
+    assert client.post(f"/companies/{company['id']}/restore").status_code == 409
+
+
+def test_client_change_is_logged_with_readable_names(client):
+    alice = make_client(client, company="Acme", first_name="Alice", last_name="Martin")
+    bob = make_client(client, company="Globex", first_name="Bob")
+    task = client.post("/tasks/", json={"client_id": alice["id"], "title": "x"}).json()
+    client.put(f"/tasks/{task['id']}", json={"client_id": bob["id"]})
+    log = client.get(f"/tasks/{task['id']}/logs").json()[-1]
+    assert (log["old_label"], log["new_label"]) == ("Alice Martin · Acme", "Bob · Globex")
+
+
+def test_deleted_comment_is_kept_in_history(client):
+    customer = make_client(client)
+    task = client.post("/tasks/", json={"client_id": customer["id"], "title": "x"}).json()
+    comment = client.post(f"/tasks/{task['id']}/comments", json={"content": "Appel du 12"}).json()
+    client.delete(f"/tasks/{task['id']}/comments/{comment['id']}")
+    log = client.get(f"/tasks/{task['id']}/logs").json()[-1]
+    assert (log["field_changed"], log["old_value"]) == ("comment", "Appel du 12")

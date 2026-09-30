@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+from app.archive import archive_client, restore_client
 from app.database import get_db
 from app.deps import get_current_user
 from app.repository import get_client, get_company, owned
@@ -11,8 +12,10 @@ router = APIRouter(prefix="/clients", tags=["clients"])
 
 
 @router.get("/", response_model=list[schemas.ClientRead])
-def get_clients(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    return [enrich_client(c) for c in owned(db, models.Client, user).all()]
+def get_clients(
+    archived: bool = False, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+):
+    return [enrich_client(c) for c in owned(db, models.Client, user, archived=archived).all()]
 
 
 @router.post("/", response_model=schemas.ClientRead, status_code=201)
@@ -54,9 +57,17 @@ def update_client(
 def delete_client(
     client_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
 ):
-    client = get_client(db, client_id, user)
-    # Les tâches (et leurs logs) seront supprimées en cascade
-    for task in list(client.tasks):
-        db.delete(task)
-    db.delete(client)
+    """Archive le client et ses tâches (réversible)."""
+    archive_client(db, get_client(db, client_id, user))
     db.commit()
+
+
+@router.post("/{client_id}/restore", response_model=schemas.ClientRead)
+def restore(client_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    client = get_client(db, client_id, user, archived=True)
+    if client.company.archived_at is not None:
+        raise HTTPException(status_code=409, detail="Restaurez d'abord l'entreprise de ce client")
+    restore_client(db, client)
+    db.commit()
+    db.refresh(client)
+    return enrich_client(client)
