@@ -147,7 +147,9 @@ class TaskUpdate(BaseModel):
     comment: str | None = None  # stored in log, not in task
 
 
-class TaskRead(BaseModel):
+class TaskSummary(BaseModel):
+    """Représentation allégée pour les listes (sans commentaires ni journal)."""
+
     id: str
     client_id: str
     title: str
@@ -158,8 +160,21 @@ class TaskRead(BaseModel):
     due_date: date | None = None
     created_at: datetime
     updated_at: datetime
+    archived_at: datetime | None = None
     client: ClientRead
-    logs: list[TaskLogRead] = []
-    comments: list[TaskCommentRead] = []
+    comments_count: int = 0
 
     model_config = {"from_attributes": True}
+
+
+class TaskRead(TaskSummary):
+    """Détail d'une tâche ; le journal se lit via GET /tasks/{id}/logs."""
+
+    comments: list[TaskCommentRead] = []
+
+
+class TaskPage(BaseModel):
+    items: list[TaskSummary]
+    total: int
+    limit: int
+    offset: int
