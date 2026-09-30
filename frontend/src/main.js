@@ -1,8 +1,31 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
+import { createAppRouter } from './router/index.js'
+import { setUnauthorizedHandler } from './api/index.js'
+import { useAuthStore } from './stores/auth.js'
+import { useToastStore } from './stores/toast.js'
 import './style.css'
 
 const app = createApp(App)
-app.use(createPinia())
+const pinia = createPinia()
+const router = createAppRouter()
+app.use(pinia)
+app.use(router)
+
+// Session expirée pendant l'utilisation : retour à l'écran de connexion.
+setUnauthorizedHandler(() => {
+  const auth = useAuthStore()
+  if (!auth.isAuthenticated) return
+  auth.clearSession()
+  useToastStore().info('Votre session a expiré, reconnectez-vous.')
+  router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+})
+
+// Filet de sécurité : aucune erreur inattendue ne passe inaperçue.
+app.config.errorHandler = (err) => {
+  console.error(err)
+  useToastStore().error(err)
+}
+
 app.mount('#app')

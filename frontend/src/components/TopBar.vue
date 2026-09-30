@@ -2,8 +2,9 @@
   <header
     class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-5 py-3 flex items-center gap-3 flex-wrap shrink-0"
   >
-    <!-- Global search -->
+    <!-- Recherche -->
     <div class="relative flex-1 min-w-48">
+      <label for="task-search" class="sr-only">Rechercher une tâche</label>
       <svg
         class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
         fill="none"
@@ -18,52 +19,48 @@
         />
       </svg>
       <input
+        id="task-search"
         v-model="searchQuery"
-        type="text"
-        placeholder="Rechercher une tâche..."
+        type="search"
+        placeholder="Rechercher (titre, description, commentaires)…"
         class="w-full pl-9 pr-3 py-2 text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg focus:ring-2 focus:ring-indigo-500 placeholder-slate-400 transition"
         @input="handleSearch"
       />
     </div>
 
-    <!-- Status filter -->
+    <label for="status-filter" class="sr-only">Statut</label>
     <select
+      id="status-filter"
       v-model="statusFilter"
       class="text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-      @change="handleStatusFilter"
+      @change="taskStore.setFilter('status', statusFilter || null)"
     >
       <option value="">Tous les statuts</option>
-      <option value="TODO">À faire</option>
-      <option value="IN_PROGRESS">En cours</option>
-      <option value="BLOCKED">En attente Client</option>
+      <option v-for="(label, value) in STATUS_LABELS" :key="value" :value="value">{{ label }}</option>
     </select>
 
-    <!-- Presence status filter -->
+    <label for="presence-filter" class="sr-only">Présence du client</label>
     <select
+      id="presence-filter"
       v-model="presenceFilter"
       class="text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-      @change="handlePresenceFilter"
+      @change="taskStore.setFilter('presenceStatus', presenceFilter || null)"
     >
       <option value="">Toutes les présences</option>
-      <option value="PRESENT">🟢 Présent</option>
-      <option value="RECENTLY_BACK">🔵 Rentré récemment</option>
-      <option value="SOON_BACK">🟡 Bientôt de retour</option>
-      <option value="ABSENT">🔴 Absent</option>
+      <option v-for="(item, value) in PRESENCE" :key="value" :value="value">{{ item.label }}</option>
     </select>
 
-    <!-- Show done toggle -->
-    <label
-      class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer select-none"
-    >
+    <div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 select-none">
       <button
+        id="show-done"
         type="button"
+        role="switch"
+        :aria-checked="taskStore.filters.showDone"
         :class="[
           'relative w-10 h-5 rounded-full transition-colors shrink-0',
           taskStore.filters.showDone ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600',
         ]"
-        role="switch"
-        :aria-checked="taskStore.filters.showDone"
-        @click="toggleShowDone"
+        @click="taskStore.setFilter('showDone', !taskStore.filters.showDone)"
       >
         <span
           :class="[
@@ -72,36 +69,27 @@
           ]"
         ></span>
       </button>
-      <span>Tâches terminées</span>
-    </label>
+      <label for="show-done" class="cursor-pointer">Terminées</label>
+    </div>
 
-    <!-- Dark mode toggle -->
-    <button
-      class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-      :title="isDark ? 'Mode clair' : 'Mode sombre'"
-      @click="$emit('toggle-dark')"
+    <!-- Export CSV des tâches filtrées -->
+    <a
+      :href="exportUrl"
+      download
+      class="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+      title="Exporter les tâches affichées (CSV, compatible Excel)"
     >
-      <!-- Sun -->
-      <svg v-if="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
           stroke-width="2"
-          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
         />
       </svg>
-      <!-- Moon -->
-      <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-        />
-      </svg>
-    </button>
+      CSV
+    </a>
 
-    <!-- New task button -->
     <button
       class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors shadow-xs"
       @click="$emit('open-create')"
@@ -115,36 +103,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { tasksApi } from '../api/index.js'
 import { useTaskStore } from '../stores/taskStore.js'
+import { PRESENCE, STATUS_LABELS } from '../utils/labels.js'
 
-defineProps({ isDark: Boolean })
-defineEmits(['toggle-dark', 'open-create'])
+defineEmits(['open-create'])
 
 const taskStore = useTaskStore()
 
 const searchQuery = ref(taskStore.filters.search)
 const statusFilter = ref(taskStore.filters.status || '')
 const presenceFilter = ref(taskStore.filters.presenceStatus || '')
+const exportUrl = computed(() => tasksApi.exportUrl(taskStore.queryParams()))
 
 let searchTimeout = null
 
 function handleSearch() {
   clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    taskStore.setFilter('search', searchQuery.value)
-  }, 350)
+  searchTimeout = setTimeout(() => taskStore.setFilter('search', searchQuery.value), 300)
 }
 
-function handleStatusFilter() {
-  taskStore.setFilter('status', statusFilter.value || null)
-}
-
-function handlePresenceFilter() {
-  taskStore.setFilter('presenceStatus', presenceFilter.value || null)
-}
-
-function toggleShowDone() {
-  taskStore.setFilter('showDone', !taskStore.filters.showDone)
-}
+onBeforeUnmount(() => clearTimeout(searchTimeout))
 </script>
