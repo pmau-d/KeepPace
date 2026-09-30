@@ -1,22 +1,26 @@
+# Environnement de développement (rechargement à chaud).
+# Prérequis : copier .env.example en .env et renseigner les valeurs.
+# Production : voir docker-compose.prod.yml.
 
 services:
   db:
     image: postgres:15-alpine
     container_name: keeppace_db
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: keeppace_user
-      POSTGRES_PASSWORD: keeppace_password
-      POSTGRES_DB: keeppace_dev
+      POSTGRES_USER: ${POSTGRES_USER:?Définir POSTGRES_USER dans .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans .env}
+      POSTGRES_DB: ${POSTGRES_DB:?Définir POSTGRES_DB dans .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Port 5432 volontairement non publié. Pour y accéder depuis la machine
+    # hôte (client SQL), ajouter `ports: ["127.0.0.1:5432:5432"]` dans un
+    # docker-compose.override.yml local.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
-    ports:
-      - "5432:5432"
     networks:
       - keeppace_network
 
@@ -25,13 +29,15 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: keeppace_backend
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./backend:/app
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+psycopg://keeppace_user:keeppace_password@db:5432/keeppace_dev
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      ENVIRONMENT: development
+      SECRET_KEY: ${SECRET_KEY:-dev-insecure-secret-key-change-me}
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
       db:
@@ -44,7 +50,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: keeppace_frontend
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -63,4 +69,3 @@ networks:
 
 volumes:
   postgres_data:
-
