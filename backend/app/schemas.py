@@ -1,9 +1,9 @@
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, EmailStr, Field, StringConstraints, model_validator
 
-from app.enums import TaskPriority, TaskStatus
+from app.enums import PresenceStatus, TaskPriority, TaskStatus
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 OptionalName = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None
@@ -47,19 +47,32 @@ class CompanyRead(BaseModel):
 # ─── Client ─────────────────────────────────────────────────────────────────
 
 
-class ClientCreate(BaseModel):
+class AbsencePeriod(BaseModel):
+    absence_start_date: date | None = None
+    absence_end_date: date | None = None
+
+    @model_validator(mode="after")
+    def _end_after_start(self):
+        if (
+            self.absence_start_date
+            and self.absence_end_date
+            and self.absence_end_date < self.absence_start_date
+        ):
+            raise ValueError("La fin d'absence doit suivre son début")
+        return self
+
+
+class ClientCreate(AbsencePeriod):
     company_id: str
     first_name: Name
     last_name: OptionalName = None  # optionnel — seuls prénom + entreprise sont requis
     email: EmailStr | None = None
-    absence_end_date: date | None = None
 
 
-class ClientUpdate(BaseModel):
+class ClientUpdate(AbsencePeriod):
     first_name: Name | None = None
     last_name: OptionalName = None
     email: EmailStr | None = None
-    absence_end_date: date | None = None
     company_id: str | None = None
 
 
@@ -69,9 +82,10 @@ class ClientRead(BaseModel):
     first_name: str
     last_name: str | None = None
     email: str | None = None
+    absence_start_date: date | None = None
     absence_end_date: date | None = None
     company: CompanyRead
-    presence_status: str | None = None
+    presence_status: PresenceStatus | None = None
 
     model_config = {"from_attributes": True}
 
