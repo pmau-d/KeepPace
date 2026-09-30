@@ -129,14 +129,15 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { errorMessage } from '../api/index.js'
-import { useClientStore } from '../stores/clientStore.js'
+import { errorMessage } from '../api/index'
+import { useClientStore } from '../stores/clientStore'
 import AbsencePeriodFields from './AbsencePeriodFields.vue'
+import type { Client } from '../types/api'
 
-const props = defineProps({ client: { type: Object, required: true } })
-const emit = defineEmits(['close', 'updated'])
+const props = defineProps<{ client: Client }>()
+const emit = defineEmits<{ close: []; updated: [client: Client] }>()
 
 const clientStore = useClientStore()
 

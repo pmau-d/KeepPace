@@ -1,10 +1,10 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
-import { createAppRouter } from './router/index.js'
-import { setUnauthorizedHandler } from './api/index.js'
-import { useAuthStore } from './stores/auth.js'
-import { useToastStore } from './stores/toast.js'
+import { createAppRouter } from './router/index'
+import { setUnauthorizedHandler } from './api/index'
+import { useAuthStore } from './stores/auth'
+import { useToastStore } from './stores/toast'
 import './style.css'
 
 const app = createApp(App)

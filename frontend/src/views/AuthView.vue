@@ -95,13 +95,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { errorMessage } from '../api/index.js'
-import { useAuthStore } from '../stores/auth.js'
+import { errorMessage } from '../api/index'
+import { useAuthStore } from '../stores/auth'
 
-const props = defineProps({ mode: { type: String, default: 'login' } })
+const props = withDefaults(defineProps<{ mode?: 'login' | 'register' }>(), { mode: 'login' })
 
 const auth = useAuthStore()
 const route = useRoute()

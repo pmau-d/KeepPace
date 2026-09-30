@@ -76,13 +76,13 @@
   </main>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { useTaskStore } from '../stores/taskStore.js'
-import { groupTasksByDay } from '../utils/grouping.js'
+import { useTaskStore } from '../stores/taskStore'
+import { groupTasksByDay } from '../utils/grouping'
 import TaskCard from './TaskCard.vue'
 
-defineEmits(['open-task'])
+defineEmits<{ 'open-task': [taskId: string] }>()
 
 const taskStore = useTaskStore()
 

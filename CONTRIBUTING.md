@@ -58,7 +58,8 @@ Pour travailler sans Docker, suivez la section
 - **Backend** : code formaté par `ruff format`, typage des signatures, une
   migration Alembic pour tout changement de schéma (un test vérifie qu'aucune
   n'a été oubliée), des tests pytest pour chaque comportement de l'API.
-- **Frontend** : composition API (`<script setup>`), logique métier dans les
+- **Frontend** : TypeScript strict (`<script setup lang="ts">`, props et événements
+  typés, types de l'API dans `src/types/api.ts`), logique métier dans les
   stores Pinia ou les fonctions de `src/utils/`, retours visibles pour
   l'utilisateur (toasts) plutôt qu'erreurs silencieuses.
 - **Données** : n'utilisez que des données fictives dans les tests, les captures

@@ -1,3 +1,5 @@
+/// <reference types="vitest/config" />
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
@@ -7,6 +9,9 @@ const apiTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8000'
 
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
   server: {
     host: '0.0.0.0',
     port: 3000,
@@ -20,7 +25,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    include: ['src/**/*.test.js'],
-    coverage: { include: ['src/**/*.{js,vue}'] },
+    include: ['src/**/*.test.ts'],
+    coverage: { include: ['src/**/*.{ts,vue}'] },
   },
 })

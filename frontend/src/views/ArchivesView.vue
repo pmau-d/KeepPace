@@ -49,47 +49,67 @@
   </main>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { clientsApi, companiesApi, tasksApi } from '../api/index.js'
-import { useClientStore } from '../stores/clientStore.js'
-import { useToastStore } from '../stores/toast.js'
-import { formatDateTime, fullName } from '../utils/labels.js'
+import { clientsApi, companiesApi, tasksApi } from '../api/index'
+import { useClientStore } from '../stores/clientStore'
+import { useToastStore } from '../stores/toast'
+import { formatDateTime, fullName } from '../utils/labels'
+import type { Client, Company, TaskSummary } from '../types/api'
+
+interface Archived {
+  id: string
+  archived_at: string | null
+}
+
+interface Section<T extends Archived = Archived> {
+  key: string
+  title: string
+  items: T[]
+  title_of: (item: T) => string
+  subtitle_of: (item: T) => string
+  restore: (item: T) => Promise<unknown>
+}
+
+/** Garde le typage précis de chaque section tout en les listant ensemble. */
+function defineSection<T extends Archived>(value: Section<T>): Section {
+  return value as unknown as Section
+}
 
 const clientStore = useClientStore()
 const toast = useToastStore()
 
-const tasks = ref([])
-const clients = ref([])
-const companies = ref([])
+const tasks = ref<TaskSummary[]>([])
+const clients = ref<Client[]>([])
+const companies = ref<Company[]>([])
 const loading = ref(true)
-const restoring = ref(null)
+const restoring = ref<string | null>(null)
 
-const sections = computed(() => [
-  {
+const sections = computed<Section[]>(() => [
+  defineSection<Company>({
     key: 'companies',
     title: 'Entreprises',
     items: companies.value,
     title_of: (c) => c.name,
     subtitle_of: () => 'Restaure aussi les clients et tâches archivés avec elle',
     restore: (c) => companiesApi.restore(c.id),
-  },
-  {
+  }),
+  defineSection<Client>({
     key: 'clients',
     title: 'Clients',
     items: clients.value,
     title_of: (c) => fullName(c),
     subtitle_of: (c) => c.company.name,
     restore: (c) => clientsApi.restore(c.id),
-  },
-  {
+  }),
+  defineSection<TaskSummary>({
     key: 'tasks',
     title: 'Tâches',
     items: tasks.value,
     title_of: (t) => t.title,
     subtitle_of: (t) => `${fullName(t.client)} · ${t.client.company.name}`,
     restore: (t) => tasksApi.restore(t.id),
-  },
+  }),
 ])
 
 async function load() {
@@ -108,11 +128,11 @@ async function load() {
   }
 }
 
-async function restore(section, item) {
+async function restore(target: Section, item: Archived) {
   restoring.value = item.id
   try {
-    await section.restore(item)
-    toast.success(`« ${section.title_of(item)} » restauré.`)
+    await target.restore(item)
+    toast.success(`« ${target.title_of(item)} » restauré.`)
     await Promise.all([load(), clientStore.fetchAll()])
   } catch (error) {
     // 409 : le parent (client ou entreprise) est lui-même archivé

@@ -63,18 +63,16 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
-import { tasksApi } from '../../api/index.js'
-import { confirm } from '../../composables/useConfirm.js'
-import { useToastStore } from '../../stores/toast.js'
-import { formatDateTime } from '../../utils/labels.js'
+import { tasksApi } from '../../api/index'
+import { confirm } from '../../composables/useConfirm'
+import { useToastStore } from '../../stores/toast'
+import { formatDateTime } from '../../utils/labels'
+import type { TaskComment } from '../../types/api'
 
-const props = defineProps({
-  taskId: { type: String, required: true },
-  comments: { type: Array, required: true },
-})
-const emit = defineEmits(['update:comments', 'changed'])
+const props = defineProps<{ taskId: string; comments: TaskComment[] }>()
+const emit = defineEmits<{ 'update:comments': [comments: TaskComment[]]; changed: [] }>()
 
 const toast = useToastStore()
 const draft = ref('')
@@ -95,7 +93,7 @@ async function submit() {
   }
 }
 
-async function remove(comment) {
+async function remove(comment: TaskComment) {
   const ok = await confirm({
     title: 'Supprimer ce commentaire ?',
     message: "Son contenu restera visible dans l'historique de la tâche.",

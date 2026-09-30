@@ -45,23 +45,25 @@
   <TaskSlideOver v-if="selectedId" :task-id="selectedId" @close="selectedId = null" @changed="load" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { tasksApi } from '../api/index.js'
+import { tasksApi } from '../api/index'
 import TaskCard from '../components/TaskCard.vue'
 import TaskSlideOver from '../components/task/TaskSlideOver.vue'
-import { FOLLOW_UP_REASONS } from '../utils/labels.js'
+import { FOLLOW_UP_REASONS } from '../utils/labels'
+import type { FollowUpItem, FollowUpReason } from '../types/api'
 
-const items = ref([])
+const items = ref<FollowUpItem[]>([])
 const loading = ref(false)
-const selectedId = ref(null)
+const selectedId = ref<string | null>(null)
 
 // L'API renvoie les tâches déjà triées par urgence : on garde cet ordre.
 const groups = computed(() => {
-  const byReason = new Map()
+  const byReason = new Map<FollowUpReason, FollowUpItem[]>()
   for (const task of items.value) {
-    if (!byReason.has(task.follow_up_reason)) byReason.set(task.follow_up_reason, [])
-    byReason.get(task.follow_up_reason).push(task)
+    const group = byReason.get(task.follow_up_reason) ?? []
+    group.push(task)
+    byReason.set(task.follow_up_reason, group)
   }
   return [...byReason].map(([reason, tasks]) => ({ reason, tasks }))
 })

@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory } from 'vue-router'
 
-vi.mock('../../api/index.js', () => ({ authApi: { me: vi.fn() } }))
+vi.mock('../../api/index', () => ({ authApi: { me: vi.fn() } }))
 
-import { authApi } from '../../api/index.js'
-import { createAppRouter } from '../index.js'
+import { authApi } from '../../api/index'
+import { createAppRouter } from '../index'
+import { makeUser, response } from '../../test/factories'
 
 describe('garde de navigation', () => {
   beforeEach(() => {
@@ -14,7 +15,7 @@ describe('garde de navigation', () => {
   })
 
   it('renvoie vers la connexion en gardant la page demandée', async () => {
-    authApi.me.mockRejectedValueOnce(new Error('401'))
+    vi.mocked(authApi.me).mockRejectedValueOnce(new Error('401'))
     const router = createAppRouter(createMemoryHistory())
     await router.push('/tasks/abc')
     expect(router.currentRoute.value.name).toBe('login')
@@ -22,7 +23,7 @@ describe('garde de navigation', () => {
   })
 
   it("laisse passer un utilisateur connecté et l'écarte des pages invité", async () => {
-    authApi.me.mockResolvedValueOnce({ data: { id: '1', email: 'a@example.com' } })
+    vi.mocked(authApi.me).mockResolvedValueOnce(response(makeUser()) as never)
     const router = createAppRouter(createMemoryHistory())
     await router.push('/relances')
     expect(router.currentRoute.value.name).toBe('follow-up')

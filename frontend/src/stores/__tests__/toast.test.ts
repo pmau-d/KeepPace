@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { useToastStore } from '../toast.js'
+import { useToastStore } from '../toast'
 
 describe('toasts', () => {
   beforeEach(() => {
@@ -30,7 +30,7 @@ describe('toasts', () => {
     const toast = useToastStore()
     const run = vi.fn()
     toast.success('Archivée', { action: { label: 'Annuler', run } })
-    await toast.runAction(toast.toasts[0])
+    await toast.runAction(toast.toasts[0]!)
     expect(run).toHaveBeenCalledOnce()
     expect(toast.toasts).toHaveLength(0)
   })

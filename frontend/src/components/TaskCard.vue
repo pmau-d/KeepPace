@@ -89,14 +89,15 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
 import StatusBadge from './StatusBadge.vue'
-import { useTaskStore } from '../stores/taskStore.js'
-import { PRIORITY_LABELS, formatDate, fullName, presenceColor, presenceLabel } from '../utils/labels.js'
+import { useTaskStore } from '../stores/taskStore'
+import { PRIORITY_LABELS, formatDate, fullName, presenceColor, presenceLabel } from '../utils/labels'
+import type { TaskPriority, TaskSummary } from '../types/api'
 
-const props = defineProps({ task: { type: Object, required: true } })
-defineEmits(['open'])
+const props = defineProps<{ task: TaskSummary }>()
+defineEmits<{ open: [] }>()
 
 const taskStore = useTaskStore()
 const reopening = ref(false)
@@ -110,12 +111,13 @@ const isOverdue = computed(() => {
   return new Date(`${props.task.due_date}T00:00:00`) < today
 })
 
-const priorityDotClass = computed(
-  () =>
-    ({ HIGH: 'bg-red-500', MEDIUM: 'bg-amber-400', LOW: 'bg-green-500' })[props.task.priority] ??
-    'bg-slate-300',
-)
-const priorityTitle = computed(() => `Priorité ${PRIORITY_LABELS[props.task.priority]?.toLowerCase() ?? ''}`)
+const PRIORITY_DOTS: Record<TaskPriority, string> = {
+  HIGH: 'bg-red-500',
+  MEDIUM: 'bg-amber-400',
+  LOW: 'bg-green-500',
+}
+const priorityDotClass = computed(() => PRIORITY_DOTS[props.task.priority])
+const priorityTitle = computed(() => `Priorité ${PRIORITY_LABELS[props.task.priority].toLowerCase()}`)
 
 async function handleReopen() {
   reopening.value = true
