@@ -150,6 +150,13 @@ class TaskUpdate(BaseModel):
     comment: str | None = None  # stored in log, not in task
 
 
+class TaskSnooze(BaseModel):
+    """Reporter la relance : la nouvelle échéance est aujourd'hui + `days`."""
+
+    days: int = Field(ge=1, le=365)
+    comment: str | None = Field(default=None, max_length=1000)
+
+
 class TaskSummary(BaseModel):
     """Représentation allégée pour les listes (sans commentaires ni journal)."""
 

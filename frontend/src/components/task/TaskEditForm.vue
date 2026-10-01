@@ -87,6 +87,40 @@
       {{ saving ? 'Enregistrement…' : isDirty ? 'Enregistrer' : 'Aucune modification' }}
     </button>
 
+    <section
+      v-if="task.status !== 'DONE'"
+      class="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2"
+      aria-labelledby="follow-up-title"
+    >
+      <p id="follow-up-title" :class="[labelClass, 'flex items-center gap-1.5']">
+        <AlarmClock class="w-3.5 h-3.5" aria-hidden="true" /> Relancer dans
+      </p>
+      <div class="grid grid-cols-4 gap-1.5">
+        <button
+          v-for="option in SNOOZE_OPTIONS"
+          :key="option.days"
+          type="button"
+          :disabled="busy"
+          :title="`Nouvelle échéance : ${snoozeTarget(option.days)}`"
+          class="text-xs font-medium py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors disabled:opacity-50"
+          @click="snooze(option.days)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+      <a
+        v-if="mailto"
+        :href="mailto"
+        class="flex items-center justify-center gap-2 text-sm font-medium py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+      >
+        <Mail class="w-4 h-4" aria-hidden="true" /> Rédiger une relance à {{ task.client.first_name }}
+      </a>
+      <p v-else class="text-xs text-slate-400 flex items-center gap-1.5">
+        <Mail class="w-3.5 h-3.5" aria-hidden="true" />
+        Ajoutez l'email du client pour rédiger une relance en un clic.
+      </p>
+    </section>
+
     <div class="pt-3 border-t border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-2">
       <button
         v-if="task.status !== 'DONE'"
@@ -130,14 +164,17 @@
 </template>
 
 <script setup lang="ts">
-import { Check, Copy, RotateCcw } from '@lucide/vue'
+import { AlarmClock, Check, Copy, Mail, RotateCcw } from '@lucide/vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { confirm } from '../../composables/useConfirm'
+import { useAuthStore } from '../../stores/auth'
 import { useTaskStore } from '../../stores/taskStore'
 import { useToastStore } from '../../stores/toast'
 import BaseSelect from '../ui/BaseSelect.vue'
 import DatePicker from '../ui/DatePicker.vue'
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '../../utils/options'
+import { addDays, formatCompactDate } from '../../utils/dates'
+import { followUpDraft, mailtoHref } from '../../utils/mailto'
 import type { Task, TaskPriority, TaskStatus, TaskSummary, TaskUpdatePayload } from '../../types/api'
 
 const props = defineProps<{ task: Task }>()
@@ -145,6 +182,19 @@ const emit = defineEmits<{ updated: [task: TaskSummary]; duplicate: []; archived
 
 const taskStore = useTaskStore()
 const toast = useToastStore()
+const auth = useAuthStore()
+
+const SNOOZE_OPTIONS = [
+  { days: 1, label: 'Demain' },
+  { days: 3, label: '3 jours' },
+  { days: 7, label: '1 sem.' },
+  { days: 14, label: '2 sem.' },
+]
+const snoozeTarget = (days: number) => formatCompactDate(addDays(new Date(), days))
+const mailto = computed(() => {
+  const draft = followUpDraft(props.task, auth.user)
+  return draft ? mailtoHref(draft) : null
+})
 
 const SUB_STATUS_SUGGESTIONS = [
   'En attente du client',
@@ -235,6 +285,11 @@ async function run(action: () => Promise<TaskSummary>, successMessage: string) {
   } finally {
     busy.value = false
   }
+}
+
+async function snooze(days: number) {
+  const note = form.comment.trim() || undefined
+  await run(() => taskStore.snoozeTask(props.task.id, days, note), `Relance prévue le ${snoozeTarget(days)}`)
 }
 
 async function archive() {

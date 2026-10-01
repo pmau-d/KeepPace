@@ -113,6 +113,13 @@ export const useTaskStore = defineStore('tasks', () => {
     return task
   }
 
+  /** « Relancer dans N jours » : la liste est rechargée, la tâche change de groupe. */
+  async function snoozeTask(id: string, days: number, comment?: string) {
+    const task = (await tasksApi.snooze(id, days, comment)).data
+    await fetchTasks()
+    return task
+  }
+
   async function archiveTask(id: string) {
     await tasksApi.archive(id)
     const before = tasks.value.length
@@ -157,6 +164,7 @@ export const useTaskStore = defineStore('tasks', () => {
     updateTask,
     closeTask,
     reopenTask,
+    snoozeTask,
     archiveTask,
     restoreTask,
     setFilter,

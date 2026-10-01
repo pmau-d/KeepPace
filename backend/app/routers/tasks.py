@@ -251,6 +251,34 @@ def reopen_task(task_id: str, db: Session = Depends(get_db), user: models.User =
     return enrich_task(db, task)
 
 
+@router.post("/{task_id}/snooze", response_model=schemas.TaskRead)
+def snooze_task(
+    task_id: str,
+    data: schemas.TaskSnooze,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """« Relancer dans N jours » : repousse l'échéance et le note dans l'historique.
+
+    La mise à jour remet aussi à zéro le délai « en attente sans nouvelle ».
+    """
+    task = get_task(db, task_id, user)
+    if task.status == TaskStatus.DONE:
+        raise HTTPException(status_code=409, detail="Une tâche terminée ne peut pas être reportée")
+    new_due = today() + timedelta(days=data.days)
+    days = f"{data.days} jour{'s' if data.days > 1 else ''}"
+    note = f"Relance reportée de {days}" + (
+        f" — {data.comment.strip()}" if data.comment and data.comment.strip() else ""
+    )
+    old_due = task.due_date.isoformat() if task.due_date else None
+    db.add(_log(task, "due_date", old_due, new_due.isoformat(), note))
+    task.due_date = new_due
+    task.updated_at = utcnow()
+    db.commit()
+    db.refresh(task)
+    return enrich_task(db, task)
+
+
 @router.delete("/{task_id}", status_code=204)
 def delete_task(task_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     """Archive la tâche : elle disparaît des listes mais garde tout son historique."""
