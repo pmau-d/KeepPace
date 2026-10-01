@@ -1,22 +1,22 @@
-name: Proposer une fonctionnalité
-description: Une idée pour améliorer KeepPace.
+name: Proposer une fonctionnalité · Suggest a feature
+description: Une idée pour améliorer KeepPace. · An idea to improve KeepPace.
 labels: ["amélioration"]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: Besoin
-      description: Quel problème cette fonctionnalité résoudrait-elle ?
-      placeholder: "Aujourd'hui, quand je…, je dois…"
+      label: Besoin · Need
+      description: Quel problème cette fonctionnalité résoudrait-elle ? · Which problem would this feature solve?
+      placeholder: "Aujourd'hui, quand je…, je dois… · Today, when I…, I have to…"
     validations:
       required: true
   - type: textarea
     id: solution
     attributes:
-      label: Solution envisagée
-      description: Comment l'imaginez-vous ?
+      label: Solution envisagée · Proposed solution
+      description: Comment l'imaginez-vous ? · How do you picture it?
   - type: textarea
     id: alternatives
     attributes:
       label: Alternatives
-      description: D'autres solutions ou contournements envisagés.
+      description: D'autres solutions ou contournements envisagés. · Other solutions or workarounds considered.
