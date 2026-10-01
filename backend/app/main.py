@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="KeepPace API",
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan,
     # Documentation interactive désactivée en production.
     docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
