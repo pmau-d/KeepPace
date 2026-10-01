@@ -33,19 +33,12 @@ def database_url(tmp_path):
     return os.environ.get("MIGRATION_TEST_DATABASE_URL") or f"sqlite:///{tmp_path / 'migrations.db'}"
 
 
-@pytest.fixture()
-def engine(database_url):
-    engine = create_engine(database_url)
+TABLES = ("task_logs", "task_comments", "tasks", "clients", "companies", "users", "alembic_version")
+
+
+def _drop_all(engine) -> None:
     with engine.begin() as conn:
-        for table in (
-            "task_logs",
-            "task_comments",
-            "tasks",
-            "clients",
-            "companies",
-            "users",
-            "alembic_version",
-        ):
+        for table in TABLES:
             conn.execute(
                 text(
                     f"DROP TABLE IF EXISTS {table} CASCADE"
@@ -53,7 +46,17 @@ def engine(database_url):
                     else f"DROP TABLE IF EXISTS {table}"
                 )
             )
+
+
+@pytest.fixture()
+def engine(database_url):
+    engine = create_engine(database_url)
+    _drop_all(engine)
     yield engine
+    # En CI, la base PostgreSQL est partagée avec les autres tests : on ne laisse
+    # ni tables ni données (les données « anciennes » seraient sinon rattachées
+    # au premier compte créé par le test suivant).
+    _drop_all(engine)
     engine.dispose()
 
 

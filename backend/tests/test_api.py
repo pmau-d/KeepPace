@@ -5,7 +5,9 @@ from app.types import utcnow
 
 
 def make_client(api, company="Acme", first_name="Alice", **extra):
-    company_id = api.post("/companies/", json={"name": company}).json()["id"]
+    created = api.post("/companies/", json={"name": company})
+    assert created.status_code == 201, created.text
+    company_id = created.json()["id"]
     payload = {"company_id": company_id, "first_name": first_name, **extra}
     response = api.post("/clients/", json=payload)
     assert response.status_code == 201
