@@ -26,7 +26,7 @@
       v-else-if="!items.length"
       class="flex flex-col items-center justify-center h-64 text-slate-400 text-center"
     >
-      <p class="text-4xl mb-3">🎉</p>
+      <PartyPopper class="w-12 h-12 mb-3 text-indigo-400" aria-hidden="true" />
       <p class="text-lg font-medium">Rien à relancer aujourd'hui</p>
       <p class="text-sm mt-1">Aucune échéance dépassée ni client à recontacter.</p>
     </div>
@@ -46,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+import { PartyPopper } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { tasksApi } from '../api/index'
 import TaskCard from '../components/TaskCard.vue'

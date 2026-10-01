@@ -27,7 +27,7 @@
           aria-label="Fermer"
           @click="toastStore.dismiss(toast.id)"
         >
-          ✕
+          <X class="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </TransitionGroup>
@@ -35,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+import { X } from 'lucide-vue-next'
 import { useToastStore } from '../stores/toast'
 
 const toastStore = useToastStore()
