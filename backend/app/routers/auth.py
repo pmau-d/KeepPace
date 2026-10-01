@@ -95,3 +95,14 @@ def logout(response: Response):
 @router.get("/me", response_model=schemas.UserRead)
 def me(user: models.User = Depends(get_current_user)):
     return user
+
+
+@router.put("/me", response_model=schemas.UserRead)
+def update_me(
+    data: schemas.UserUpdate, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+):
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(user, field, value)
+    db.commit()
+    db.refresh(user)
+    return user

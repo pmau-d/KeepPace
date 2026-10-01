@@ -39,6 +39,16 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       TIMEZONE: ${TIMEZONE:-Europe/Paris}
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      DIGEST_ENABLED: ${DIGEST_ENABLED:-false}
+      DIGEST_HOUR: ${DIGEST_HOUR:-8}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-KeepPace <noreply@example.com>}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      SMTP_SSL: ${SMTP_SSL:-false}
+      APP_URL: ${APP_URL:-http://localhost}
     depends_on:
       db:
         condition: service_healthy

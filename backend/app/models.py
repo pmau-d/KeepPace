@@ -48,6 +48,8 @@ class User(Base):
     full_name = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
     is_active = Column(Boolean, nullable=False, default=True, server_default="true")
+    # Récap quotidien par email (si le serveur l'autorise : DIGEST_ENABLED)
+    digest_opt_in = Column(Boolean, nullable=False, default=False, server_default="false")
     created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
 
 

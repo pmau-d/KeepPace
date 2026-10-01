@@ -30,6 +30,20 @@ class Settings(BaseSettings):
     # Fuseau horaire servant à déterminer « aujourd'hui » (présence, relances).
     TIMEZONE: str = "Europe/Paris"
 
+    # Récap quotidien par email : désactivé par défaut. Il faut aussi un serveur
+    # SMTP (en développement, Mailpit : docker compose, http://localhost:8025).
+    DIGEST_ENABLED: bool = False
+    DIGEST_HOUR: int = 8
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "KeepPace <noreply@example.com>"
+    SMTP_STARTTLS: bool = True
+    SMTP_SSL: bool = False
+    # Adresse publique de l'application, pour les liens des emails.
+    APP_URL: str = "http://localhost:3000"
+
     @model_validator(mode="after")
     def _refuse_insecure_production(self):
         if self.ENVIRONMENT == "production" and (
@@ -37,6 +51,10 @@ class Settings(BaseSettings):
         ):
             raise ValueError("SECRET_KEY doit être défini (32 caractères minimum) en production.")
         return self
+
+    @property
+    def email_enabled(self) -> bool:
+        return self.DIGEST_ENABLED and bool(self.SMTP_HOST)
 
     @property
     def cookie_secure(self) -> bool:

@@ -16,6 +16,23 @@ export interface User {
   id: string
   email: string
   full_name: string | null
+  digest_opt_in: boolean
+}
+
+export interface DigestClient {
+  id: string
+  name: string
+  on: IsoDate | null
+}
+
+export interface Digest {
+  day: IsoDate
+  follow_up_total: number
+  counts: Partial<Record<FollowUpReason, number>>
+  leaving: DigestClient[]
+  returning: DigestClient[]
+  /** Le serveur sait envoyer des emails (DIGEST_ENABLED et SMTP). */
+  email_available: boolean
 }
 
 export interface RegisterPayload {
