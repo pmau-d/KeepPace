@@ -45,6 +45,17 @@
         <component :is="item.icon" class="w-4 h-4 shrink-0" aria-hidden="true" />
         {{ item.label }}
       </RouterLink>
+      <button
+        type="button"
+        class="w-full px-3 py-2 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 flex items-center gap-2"
+        @click="ui.palette.value = true"
+      >
+        <Search class="w-4 h-4 shrink-0" aria-hidden="true" />
+        <span class="flex-1 text-left">Rechercher…</span>
+        <kbd class="text-[10px] border border-slate-200 dark:border-slate-600 rounded-sm px-1.5 py-0.5">{{
+          isMac ? '⌘ K' : 'Ctrl K'
+        }}</kbd>
+      </button>
     </nav>
 
     <!-- Clients -->
@@ -66,7 +77,7 @@
           class="ml-auto p-0.5 rounded-sm text-slate-400 hover:text-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           aria-label="Importer des absences depuis un calendrier"
           title="Importer des absences (.ics)"
-          @click="importing = true"
+          @click="ui.importAbsences.value = true"
         >
           <CalendarPlus class="w-3.5 h-3.5" aria-hidden="true" />
         </button>
@@ -177,7 +188,11 @@
     </div>
   </aside>
 
-  <ImportAbsencesModal v-if="importing" @close="importing = false" @imported="taskStore.fetchTasks()" />
+  <ImportAbsencesModal
+    v-if="ui.importAbsences.value"
+    @close="ui.importAbsences.value = false"
+    @imported="taskStore.fetchTasks()"
+  />
 
   <EditClientModal
     v-if="editingClient"
@@ -197,6 +212,7 @@ import {
   Megaphone,
   Moon,
   Pencil,
+  Search,
   SquareKanban,
   Sun,
   X,
@@ -206,6 +222,7 @@ import { useRoute, useRouter } from 'vue-router'
 import EditClientModal from './EditClientModal.vue'
 import InfoTooltip from './ui/InfoTooltip.vue'
 import ImportAbsencesModal from './ImportAbsencesModal.vue'
+import { ui } from '../commands/index'
 import { confirm } from '../composables/useConfirm'
 import { useDarkMode } from '../composables/useDarkMode'
 import { useAuthStore } from '../stores/auth'
@@ -240,7 +257,7 @@ const router = useRouter()
 const { isDark, toggle: toggleDark } = useDarkMode()
 
 const editingClient = ref<Client | null>(null)
-const importing = ref(false)
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 const navigation: NavItem[] = [
   { name: 'tasks', label: 'Toutes les tâches', icon: ListTodo, matches: ['tasks', 'task'] },

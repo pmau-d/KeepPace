@@ -14,8 +14,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import TopBar from '../components/TopBar.vue'
 import TaskList from '../components/TaskList.vue'
 import TaskSlideOver from '../components/task/TaskSlideOver.vue'
@@ -27,6 +27,7 @@ import type { TaskSummary } from '../types/api'
 withDefaults(defineProps<{ id?: string | null }>(), { id: null })
 
 const router = useRouter()
+const route = useRoute()
 const taskStore = useTaskStore()
 // null : fenêtre fermée ; prefill null : nouvelle tâche ; prefill : duplication
 const creating = ref<{ prefill: TaskSummary | null } | null>(null)
@@ -40,4 +41,15 @@ function closeTask() {
 }
 
 onMounted(() => taskStore.fetchTasks())
+
+// « Nouvelle tâche » depuis la palette ou le raccourci n : /?nouvelle=1
+watch(
+  () => route.query.nouvelle,
+  (value) => {
+    if (!value) return
+    creating.value = { prefill: null }
+    void router.replace({ query: { ...route.query, nouvelle: undefined } })
+  },
+  { immediate: true },
+)
 </script>
