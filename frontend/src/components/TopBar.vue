@@ -20,26 +20,20 @@
     </div>
 
     <label for="status-filter" class="sr-only">Statut</label>
-    <select
+    <BaseSelect
       id="status-filter"
       v-model="statusFilter"
-      class="text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+      :options="[{ value: '', label: 'Tous les statuts' }, ...STATUS_OPTIONS]"
       @change="taskStore.setFilter('status', statusFilter || null)"
-    >
-      <option value="">Tous les statuts</option>
-      <option v-for="(label, value) in STATUS_LABELS" :key="value" :value="value">{{ label }}</option>
-    </select>
+    />
 
     <label for="presence-filter" class="sr-only">Présence du client</label>
-    <select
+    <BaseSelect
       id="presence-filter"
       v-model="presenceFilter"
-      class="text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+      :options="[{ value: '', label: 'Toutes les présences' }, ...PRESENCE_OPTIONS]"
       @change="taskStore.setFilter('presenceStatus', presenceFilter || null)"
-    >
-      <option value="">Toutes les présences</option>
-      <option v-for="(item, value) in PRESENCE" :key="value" :value="value">{{ item.label }}</option>
-    </select>
+    />
 
     <div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 select-none">
       <button
@@ -89,7 +83,8 @@ import { Download, Plus, Search } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { tasksApi } from '../api/index'
 import { useTaskStore } from '../stores/taskStore'
-import { PRESENCE, STATUS_LABELS } from '../utils/labels'
+import BaseSelect from './ui/BaseSelect.vue'
+import { PRESENCE_OPTIONS, STATUS_OPTIONS } from '../utils/options'
 import type { PresenceStatus, TaskStatus } from '../types/api'
 
 defineEmits<{ 'open-create': [] }>()
