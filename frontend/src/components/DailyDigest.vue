@@ -87,13 +87,20 @@ const saving = ref(false)
 const sending = ref(false)
 const optIn = computed(() => auth.user?.digest_opt_in ?? false)
 
+const plural = (count: number, one: string, many: string) => `${count} ${count > 1 ? many : one}`
+
 const summary = computed(() => {
   const d = digest.value
   if (!d) return ''
-  const parts: string[] = []
-  parts.push(d.follow_up_total ? `${d.follow_up_total} tâche(s) à relancer` : 'Aucune relance aujourd’hui')
-  if (d.leaving.length) parts.push(`${d.leaving.length} client(s) partent dans les 3 jours`)
-  if (d.returning.length) parts.push(`${d.returning.length} reviennent bientôt`)
+  const parts = [
+    d.follow_up_total
+      ? plural(d.follow_up_total, 'tâche à relancer', 'tâches à relancer')
+      : 'Aucune relance aujourd’hui',
+  ]
+  if (d.leaving.length)
+    parts.push(plural(d.leaving.length, 'client part', 'clients partent') + ' dans les 3 jours')
+  if (d.returning.length)
+    parts.push(plural(d.returning.length, 'client revient', 'clients reviennent') + ' bientôt')
   return `${parts.join(', ')}.`
 })
 
