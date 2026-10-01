@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { Download, Plus, Search } from 'lucide-vue-next'
+import { Download, Plus, Search } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { tasksApi } from '../api/index'
 import { useTaskStore } from '../stores/taskStore'

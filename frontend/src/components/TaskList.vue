@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ClipboardList } from 'lucide-vue-next'
+import { ClipboardList } from '@lucide/vue'
 import { computed } from 'vue'
 import { useTaskStore } from '../stores/taskStore'
 import { groupTasksByDay } from '../utils/grouping'

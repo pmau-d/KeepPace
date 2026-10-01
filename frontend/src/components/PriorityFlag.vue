@@ -15,7 +15,7 @@
 // présence des clients. Un commentaire en tête du template ferait du composant
 // un fragment et les attributs passés par le parent seraient perdus.
 import { computed } from 'vue'
-import { Flag } from 'lucide-vue-next'
+import { Flag } from '@lucide/vue'
 import { PRIORITY_LABELS } from '../utils/labels'
 import type { TaskPriority } from '../types/api'
 

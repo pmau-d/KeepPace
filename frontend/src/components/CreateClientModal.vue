@@ -146,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, X } from 'lucide-vue-next'
+import { Plus, X } from '@lucide/vue'
 import { ref, reactive, computed } from 'vue'
 import { errorMessage, httpStatus } from '../api/index'
 import { useClientStore } from '../stores/clientStore'
