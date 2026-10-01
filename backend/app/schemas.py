@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, Field, StringConstraints, model_validator
 
-from app.enums import FollowUpReason, PresenceStatus, TaskPriority, TaskStatus
+from app.enums import FollowUpReason, PresenceStatus, Recurrence, TaskPriority, TaskStatus
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 OptionalName = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None
@@ -137,6 +137,8 @@ class TaskCreate(BaseModel):
     sub_status: str | None = None
     priority: TaskPriority = TaskPriority.MEDIUM
     due_date: date | None = None
+    recurrence: Recurrence | None = None
+    recurrence_interval: int = Field(default=1, ge=1, le=365)
 
 
 class TaskUpdate(BaseModel):
@@ -147,6 +149,8 @@ class TaskUpdate(BaseModel):
     sub_status: str | None = None
     priority: TaskPriority | None = None
     due_date: date | None = None
+    recurrence: Recurrence | None = None
+    recurrence_interval: int | None = Field(default=None, ge=1, le=365)
     comment: str | None = None  # stored in log, not in task
 
 
@@ -168,6 +172,8 @@ class TaskSummary(BaseModel):
     sub_status: str | None = None
     priority: TaskPriority
     due_date: date | None = None
+    recurrence: Recurrence | None = None
+    recurrence_interval: int = 1
     created_at: datetime
     updated_at: datetime
     archived_at: datetime | None = None

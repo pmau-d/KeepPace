@@ -33,6 +33,8 @@ export function makeTask(overrides: Partial<TaskSummary> = {}): TaskSummary {
     sub_status: null,
     priority: 'MEDIUM',
     due_date: null,
+    recurrence: null,
+    recurrence_interval: 1,
     created_at: '2026-09-01T09:00:00Z',
     updated_at: '2026-09-01T09:00:00Z',
     archived_at: null,

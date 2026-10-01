@@ -168,6 +168,12 @@
             <DatePicker id="new-task-field-6" v-model="form.due_date" placeholder="Sans échéance" />
           </div>
 
+          <RecurrenceFields
+            v-model:recurrence="form.recurrence"
+            v-model:interval="form.recurrence_interval"
+            id-prefix="new-task"
+          />
+
           <!-- Error -->
           <p v-if="error" class="text-sm text-red-500 flex items-center gap-1">
             <CircleAlert class="w-4 h-4" aria-hidden="true" />
@@ -205,8 +211,16 @@ import { errorMessage } from '../api/index'
 import CreateClientModal from './CreateClientModal.vue'
 import BaseSelect from './ui/BaseSelect.vue'
 import DatePicker from './ui/DatePicker.vue'
+import RecurrenceFields from './task/RecurrenceFields.vue'
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '../utils/options'
-import type { Client, TaskCreatePayload, TaskPriority, TaskStatus, TaskSummary } from '../types/api'
+import type {
+  Client,
+  Recurrence,
+  TaskCreatePayload,
+  TaskPriority,
+  TaskStatus,
+  TaskSummary,
+} from '../types/api'
 
 const props = withDefaults(defineProps<{ prefill?: TaskSummary | null }>(), { prefill: null })
 const emit = defineEmits<{ close: [] }>()
@@ -222,6 +236,8 @@ const form = reactive<{
   priority: TaskPriority
   status: TaskStatus
   due_date: string
+  recurrence: Recurrence | ''
+  recurrence_interval: number
 }>({
   title: props.prefill ? `(Copie) ${props.prefill.title}` : '',
   description: props.prefill?.description ?? '',
@@ -229,6 +245,8 @@ const form = reactive<{
   priority: props.prefill?.priority ?? 'MEDIUM',
   status: props.prefill?.status === 'DONE' ? 'TODO' : (props.prefill?.status ?? 'TODO'),
   due_date: props.prefill?.due_date ?? '',
+  recurrence: props.prefill?.recurrence ?? '',
+  recurrence_interval: props.prefill?.recurrence_interval ?? 1,
 })
 
 const clientSearch = ref(
@@ -292,6 +310,10 @@ async function submit() {
     }
     if (form.due_date) payload.due_date = form.due_date
     if (form.description) payload.description = form.description
+    if (form.recurrence) {
+      payload.recurrence = form.recurrence
+      payload.recurrence_interval = form.recurrence_interval
+    }
     await taskStore.createTask(payload)
     toast.success(props.prefill ? 'Tâche dupliquée.' : 'Tâche créée.')
     emit('close')
