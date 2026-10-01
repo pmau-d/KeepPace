@@ -1,6 +1,10 @@
 <template>
   <aside
-    class="w-64 shrink-0 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col"
+    :class="[
+      'w-64 shrink-0 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex-col',
+      drawer ? 'relative flex shadow-2xl' : 'hidden lg:flex',
+    ]"
+    :aria-label="drawer ? 'Menu' : undefined"
   >
     <!-- Logo -->
     <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
@@ -9,10 +13,19 @@
       >
         <span class="text-white font-bold text-sm">KP</span>
       </div>
-      <div>
+      <div class="flex-1">
         <p class="font-bold text-base text-slate-800 dark:text-white leading-none">KeepPace</p>
         <p class="text-xs text-slate-400 mt-0.5">Tableau de bord consultant</p>
       </div>
+      <button
+        v-if="drawer"
+        type="button"
+        class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+        aria-label="Fermer le menu"
+        @click="$emit('navigate')"
+      >
+        <X class="w-5 h-5" aria-hidden="true" />
+      </button>
     </div>
 
     <!-- Navigation -->
@@ -27,7 +40,7 @@
             ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50',
         ]"
-        @click="item.name === 'tasks' && taskStore.filters.clientId && selectClient(null)"
+        @click="onNavigate(item)"
       >
         <component :is="item.icon" class="w-4 h-4 shrink-0" aria-hidden="true" />
         {{ item.label }}
@@ -36,7 +49,19 @@
 
     <!-- Clients -->
     <div class="flex-1 overflow-y-auto px-3 pb-4">
-      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-3 mb-2 px-2">Clients</p>
+      <div class="flex items-center gap-1.5 mt-3 mb-2 px-2">
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Clients</p>
+        <InfoTooltip label="Légende des pastilles de présence">
+          <p class="font-semibold text-slate-700 dark:text-slate-100 mb-2">Présence des clients</p>
+          <ul class="space-y-1.5">
+            <li v-for="(item, status) in PRESENCE" :key="status" class="flex items-center gap-2">
+              <span :class="['w-2 h-2 rounded-full shrink-0', item.color]"></span>
+              {{ item.label }}
+            </li>
+          </ul>
+          <p class="mt-2 text-slate-400">Calculée à partir des dates d'absence de chaque client.</p>
+        </InfoTooltip>
+      </div>
 
       <div v-if="clientStore.loading && !clientStore.clients.length" class="text-slate-400 text-xs px-2 py-2">
         Chargement…
@@ -81,7 +106,14 @@
                   presenceColor(client.presence_status),
                 ]"
               ></span>
-              <span class="truncate">{{ fullName(client) }}</span>
+              <span class="truncate flex-1">{{ fullName(client) }}</span>
+              <span
+                v-if="client.open_tasks_count"
+                class="text-[11px] tabular-nums px-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 group-hover/client:hidden"
+                :aria-label="`${client.open_tasks_count} tâche(s) ouverte(s)`"
+              >
+                {{ client.open_tasks_count }}
+              </span>
             </button>
             <button
               class="opacity-0 group-hover/client:opacity-100 focus:opacity-100 p-1.5 rounded-sm text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all shrink-0"
@@ -106,15 +138,6 @@
           <p>Aucun client pour l'instant.</p>
           <p class="mt-1">Créez-en un depuis « Nouvelle tâche ».</p>
         </div>
-      </div>
-    </div>
-
-    <!-- Légende -->
-    <div class="px-4 py-3 border-t border-slate-200 dark:border-slate-700 space-y-1">
-      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Présence</p>
-      <div v-for="(item, status) in PRESENCE" :key="status" class="flex items-center gap-2">
-        <span :class="['w-2 h-2 rounded-full shrink-0', item.color]"></span>
-        <span class="text-xs text-slate-500 dark:text-slate-400">{{ item.label }}</span>
       </div>
     </div>
 
@@ -154,10 +177,11 @@
 </template>
 
 <script setup lang="ts">
-import { Archive, ListTodo, LogOut, Megaphone, Moon, Pencil, Sun } from '@lucide/vue'
+import { Archive, ListTodo, LogOut, Megaphone, Moon, Pencil, Sun, X } from '@lucide/vue'
 import { computed, ref, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EditClientModal from './EditClientModal.vue'
+import InfoTooltip from './ui/InfoTooltip.vue'
 import { confirm } from '../composables/useConfirm'
 import { useDarkMode } from '../composables/useDarkMode'
 import { useAuthStore } from '../stores/auth'
@@ -179,6 +203,9 @@ interface CompanyGroup {
   name: string
   clients: Client[]
 }
+
+withDefaults(defineProps<{ drawer?: boolean }>(), { drawer: false })
+const emit = defineEmits<{ navigate: [] }>()
 
 const auth = useAuthStore()
 const clientStore = useClientStore()
@@ -215,8 +242,14 @@ const groupedClients = computed(() => {
 })
 
 async function selectClient(clientId: string | null) {
+  emit('navigate')
   if (route.name !== 'tasks' && route.name !== 'task') await router.push({ name: 'tasks' })
   await taskStore.setClientFilter(clientId)
+}
+
+function onNavigate(item: NavItem) {
+  if (item.name === 'tasks' && taskStore.filters.clientId) void selectClient(null)
+  else emit('navigate')
 }
 
 function clearClientFilterIf(clientIds: string[]) {

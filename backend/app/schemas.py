@@ -88,6 +88,7 @@ class ClientRead(BaseModel):
     archived_at: datetime | None = None
     company: CompanyRead
     presence_status: PresenceStatus | None = None
+    open_tasks_count: int = 0
 
     model_config = {"from_attributes": True}
 
