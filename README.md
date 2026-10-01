@@ -8,21 +8,31 @@
 
 **Le tableau de bord des consultants qui relancent au bon moment.**
 
+🇫🇷 Français · [🇬🇧 English](README.en.md)
+
 KeepPace suit vos tâches client par client et tient compte de la présence de vos
 interlocuteurs : inutile de relancer quelqu'un en congés, mais il faut le joindre
 avant son départ et dès son retour. Chaque modification est tracée dans un
 historique qui n'est jamais effacé.
 
-![Liste des tâches, regroupées par échéance](docs/screenshots/taches.jpg)
+![Démonstration : palette de commandes, report d'une relance, tableau et planning](docs/screenshots/demo.gif)
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/relances.jpg" alt="Vue « À relancer aujourd'hui »" /></td>
-    <td width="50%"><img src="docs/screenshots/detail-tache.jpg" alt="Panneau de détail d'une tâche" /></td>
+    <td width="50%"><img src="docs/screenshots/taches.jpg" alt="Liste des tâches regroupées par échéance" /></td>
+    <td width="50%"><img src="docs/screenshots/relances.jpg" alt="Vue « À relancer aujourd'hui » avec le récap du jour" /></td>
   </tr>
   <tr>
-    <td align="center"><em>À relancer aujourd'hui, par ordre d'urgence</em></td>
-    <td align="center"><em>Détail d'une tâche : édition, commentaires, historique</em></td>
+    <td align="center"><em>Tâches par échéance, présence des clients expliquée</em></td>
+    <td align="center"><em>À relancer aujourd'hui, avec le récap du jour</em></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/planning.jpg" alt="Planning des absences et des échéances" /></td>
+    <td width="50%"><img src="docs/screenshots/tableau.jpg" alt="Tableau Kanban par statut" /></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Planning : absences et échéances sur 4 semaines</em></td>
+    <td align="center"><em>Tableau par statut, au glisser-déposer ou au clavier</em></td>
   </tr>
 </table>
 
@@ -42,27 +52,54 @@ historique qui n'est jamais effacé.
 
 ## Fonctionnalités
 
+**Suivre**
+
 - **Tâches par client** : statut (à faire, en cours, en attente client, terminé),
-  priorité, échéance, statut personnalisé libre (« en attente du fournisseur »…),
-  regroupement par jour avec les retards en tête.
+  priorité (drapeau), échéance, statut personnalisé libre (« en attente du
+  fournisseur »…), regroupées par jour avec les retards en tête ; mode compact.
+- **Tâches récurrentes** : chaque jour, semaine, mois ou année, avec un
+  intervalle ; terminer une occurrence crée la suivante sans dériver.
+- **Tableau** (Kanban) par statut, au glisser-déposer ou au clavier.
+- **Historique complet** : chaque changement est journalisé avec des libellés
+  lisibles ; supprimer archive (réversible, avec « Annuler ») au lieu d'effacer.
+
+**Relancer au bon moment**
+
 - **Présence des clients** : période d'absence (du… au…) et statut calculé
-  automatiquement : présent, bientôt absent, absent, bientôt de retour, rentré
-  récemment.
+  automatiquement (présent, bientôt absent, absent, bientôt de retour, rentré
+  récemment), expliqué sur chaque tâche (« Absent jusqu'au ven. 9 oct. »).
+- **Import des absences** depuis un calendrier `.ics` (rapprochement par email
+  ou par nom) ou en collant une **réponse automatique** : les dates sont
+  reconnues (« du 3 au 17 octobre », « back on October 20th »…). Tout est
+  analysé dans le navigateur.
+- **Planning** : absences en barres et échéances sur 2 à 8 semaines.
 - **À relancer aujourd'hui** : les tâches à traiter maintenant avec leur motif
   (échéance dépassée, échéance du jour, client qui part, client qui rentre,
   attente sans nouvelle), sans les clients injoignables.
-- **Historique complet** : chaque changement est journalisé avec des libellés
-  lisibles ; supprimer archive (réversible, avec « Annuler ») au lieu d'effacer.
+- **« Relancer dans N jours »** en un clic (tracé dans l'historique) et
+  **brouillon d'email** de relance prérempli.
+- **Récap quotidien** dans l'application et, si vous l'activez, par email
+  chaque matin.
+
+**Travailler vite**
+
+- **Palette de commandes** (Ctrl/⌘ K) : commandes, tâches et clients.
+- **Raccourcis clavier** : `n` nouvelle tâche, `/` rechercher, `g` puis `t`,
+  `b`, `r`, `p` ou `a` pour changer de vue, `?` pour l'aide.
 - **Recherche plein texte** dans les titres, descriptions et commentaires ;
   filtres par statut, présence et client ; liste paginée.
 - **Export CSV** des tâches filtrées, prêt pour Excel (séparateur `;`, UTF-8).
 - **Comptes utilisateurs** : chaque compte ne voit que ses propres données.
-- **Confort** : une URL par tâche, mode sombre, navigation au clavier.
+- **Confort** : une URL par tâche, mode sombre, utilisable sur téléphone,
+  composants accessibles au clavier et aux lecteurs d'écran.
 
 <details>
-<summary>Aperçu en mode sombre</summary>
+<summary>Autres aperçus : détail d'une tâche, palette, mode sombre, mobile</summary>
 
-![Liste des tâches en mode sombre](docs/screenshots/mode-sombre.jpg)
+| | |
+| --- | --- |
+| ![Panneau de détail d'une tâche](docs/screenshots/detail-tache.jpg) | ![Palette de commandes](docs/screenshots/palette.jpg) |
+| ![Liste des tâches en mode sombre](docs/screenshots/mode-sombre.jpg) | <img src="docs/screenshots/mobile.jpg" alt="Liste des tâches sur téléphone" width="300" /> |
 
 </details>
 
@@ -82,6 +119,7 @@ docker compose up --build
 | Application              | http://localhost:3000        |
 | API                      | http://localhost:8000        |
 | Documentation de l'API   | http://localhost:8000/docs   |
+| Emails de développement (Mailpit) | http://localhost:8025 |
 
 Créez un compte depuis l'écran de connexion, ou chargez des données de
 démonstration fictives :
@@ -130,18 +168,23 @@ KeepPace/
 │   │   ├── presence.py        # règle de présence (expression SQL unique)
 │   │   ├── archive.py         # archivage en cascade et restauration
 │   │   ├── csv_export.py      # export CSV
-│   │   └── routers/           # auth, companies, clients, tasks
+│   │   ├── follow_up.py       # tâches à relancer aujourd'hui
+│   │   ├── recurrence.py      # occurrence suivante des tâches récurrentes
+│   │   ├── digest.py          # récap quotidien (contenu, email, envoi planifié)
+│   │   └── routers/           # auth, companies, clients, tasks, digest
 │   ├── alembic/versions/      # migrations du schéma
 │   ├── scripts/seed_demo.py   # données de démonstration fictives
 │   └── tests/                 # pytest (API, auth, migrations)
 ├── frontend/
 │   ├── src/
-│   │   ├── views/             # connexion, tâches, relances, archives
-│   │   ├── components/        # liste, cartes, panneau de tâche, modales
+│   │   ├── views/             # connexion, tâches, tableau, relances, planning, archives
+│   │   ├── components/        # liste, cartes, panneau de tâche, palette, modales
+│   │   ├── components/ui/     # menu déroulant, calendrier, info-bulle
+│   │   ├── commands/          # commandes de la palette et des raccourcis
 │   │   ├── stores/            # Pinia : auth, tâches, clients, toasts
 │   │   ├── router/            # routes et garde d'authentification
 │   │   ├── types/             # types TypeScript de l'API
-│   │   └── utils/             # libellés, regroupement par jour
+│   │   └── utils/             # dates, libellés, planning, import ICS, messages d'absence
 │   └── nginx.conf             # configuration de production
 ├── docker-compose.yml         # développement
 └── docker-compose.prod.yml    # production
@@ -183,6 +226,13 @@ versionné.
 | `TIMEZONE`                    | `Europe/Paris`        | Fuseau servant à calculer « aujourd'hui »                         |
 | `HTTP_PORT`                   | `80`                  | Port publié par nginx (production)                                |
 | `WEB_CONCURRENCY`             | `2`                   | Nombre de processus de l'API (production)                         |
+| `DIGEST_ENABLED`              | `false`               | Autorise l'envoi du récap quotidien par email (chaque compte l'active) |
+| `DIGEST_HOUR`                 | `8`                   | Heure d'envoi du récap (fuseau `TIMEZONE`)                        |
+| `SMTP_HOST` / `SMTP_PORT`     | *(vide)* / `587`      | Serveur d'envoi ; en dev, Mailpit est déjà configuré              |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | *(vide)*          | Identifiants SMTP                                                 |
+| `SMTP_FROM`                   | `KeepPace <noreply@example.com>` | Expéditeur des emails                                  |
+| `SMTP_STARTTLS` / `SMTP_SSL`  | `true` / `false`      | Chiffrement de la connexion SMTP                                  |
+| `APP_URL`                     | `http://localhost:3000` | Adresse publique, pour les liens des emails                     |
 
 Générer une clé secrète :
 
@@ -194,8 +244,10 @@ python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 
 ### Avec Docker
 
-`docker compose up --build` lance la base, l'API (rechargement à chaud) et le
-serveur Vite. Les migrations sont appliquées au démarrage de l'API.
+`docker compose up --build` lance la base, l'API (rechargement à chaud), le
+serveur Vite et Mailpit. Les migrations sont appliquées au démarrage de l'API.
+Pour essayer le récap par email, mettez `DIGEST_ENABLED=true` dans `.env` :
+les messages arrivent dans Mailpit (http://localhost:8025), rien ne sort.
 
 ### Sans Docker
 
