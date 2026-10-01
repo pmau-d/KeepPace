@@ -5,19 +5,10 @@
     <!-- Recherche -->
     <div class="relative flex-1 min-w-48">
       <label for="task-search" class="sr-only">Rechercher une tâche</label>
-      <svg
+      <Search
         class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
+        aria-hidden="true"
+      />
       <input
         id="task-search"
         v-model="searchQuery"
@@ -79,14 +70,7 @@
       class="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
       title="Exporter les tâches affichées (CSV, compatible Excel)"
     >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
-        />
-      </svg>
+      <Download class="w-4 h-4" aria-hidden="true" />
       CSV
     </a>
 
@@ -94,15 +78,14 @@
       class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors shadow-xs"
       @click="$emit('open-create')"
     >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-      </svg>
+      <Plus class="w-4 h-4" aria-hidden="true" />
       Nouvelle tâche
     </button>
   </header>
 </template>
 
 <script setup lang="ts">
+import { Download, Plus, Search } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { tasksApi } from '../api/index'
 import { useTaskStore } from '../stores/taskStore'

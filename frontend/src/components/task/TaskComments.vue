@@ -8,7 +8,7 @@
         <div
           class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0 mt-0.5 text-xs"
         >
-          💬
+          <MessageSquare class="w-3.5 h-3.5 text-indigo-500" aria-hidden="true" />
         </div>
         <div class="flex-1 min-w-0">
           <div class="bg-slate-50 dark:bg-slate-700/50 rounded-xl px-3 py-2">
@@ -48,14 +48,7 @@
           aria-label="Envoyer le commentaire"
           class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-xl transition-colors shrink-0"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-            />
-          </svg>
+          <Send class="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
       <p class="text-xs text-slate-400 mt-1">Ctrl+Entrée (⌘+Entrée) pour envoyer</p>
@@ -64,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+import { MessageSquare, Send } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { tasksApi } from '../../api/index'
 import { confirm } from '../../composables/useConfirm'

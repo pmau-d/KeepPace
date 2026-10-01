@@ -22,14 +22,7 @@
             aria-label="Fermer"
             @click="$emit('close')"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X class="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -55,7 +48,7 @@
               </button>
             </div>
             <p v-if="companySaved" class="text-xs text-green-600 dark:text-green-400">
-              ✓ Entreprise renommée
+              <Check class="inline w-3.5 h-3.5" aria-hidden="true" /> Entreprise renommée
             </p>
           </div>
 
@@ -130,6 +123,7 @@
 </template>
 
 <script setup lang="ts">
+import { Check, X } from 'lucide-vue-next'
 import { ref, reactive } from 'vue'
 import { errorMessage } from '../api/index'
 import { useClientStore } from '../stores/clientStore'
