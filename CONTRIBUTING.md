@@ -1,5 +1,7 @@
 # Contribuer à KeepPace
 
+🇫🇷 Français · [🇬🇧 English](CONTRIBUTING.en.md)
+
 Merci de votre intérêt ! Ce guide explique comment proposer une modification.
 En participant, vous acceptez de respecter le [code de conduite](CODE_OF_CONDUCT.md).
 
@@ -66,7 +68,8 @@ Pour travailler sans Docker, suivez la section
   et les exemples (domaine `example.com`). Ne commitez jamais de secret ni de
   fichier `.env`.
 - **Langue** : interface, messages d'erreur, commits et documentation en
-  français.
+  français. La documentation a une version anglaise (`*.en.md`), tenue à jour
+  en même temps.
 
 ## Revue
 

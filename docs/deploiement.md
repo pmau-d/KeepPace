@@ -1,5 +1,7 @@
 # Déployer KeepPace
 
+🇫🇷 Français · [🇬🇧 English](deploiement.en.md)
+
 Deux façons de mettre KeepPace en ligne :
 
 - **sur votre serveur**, avec `docker-compose.prod.yml` (voir le
