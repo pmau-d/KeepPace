@@ -72,7 +72,10 @@
       </p>
     </div>
 
-    <div class="hidden md:block md:col-start-4 md:row-start-1">
+    <!-- Sur mobile, la date n'est utile que pour les retards (groupe qui mélange plusieurs jours) -->
+    <div
+      :class="['md:block md:col-start-4 md:row-start-1', isOverdue ? 'col-start-2 row-start-3' : 'hidden']"
+    >
       <span
         v-if="task.due_date"
         :class="[
