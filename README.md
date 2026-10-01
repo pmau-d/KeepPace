@@ -226,6 +226,8 @@ versionné.
 | `TIMEZONE`                    | `Europe/Paris`        | Fuseau servant à calculer « aujourd'hui »                         |
 | `HTTP_PORT`                   | `80`                  | Port publié par nginx (production)                                |
 | `WEB_CONCURRENCY`             | `2`                   | Nombre de processus de l'API (production)                         |
+| `BACKEND_URL`                 | `backend:8000`        | Hôte et port de l'API vus par nginx (image frontend)              |
+| `DEMO_MODE`                   | `false`               | Démo publique : crée le compte de démonstration au démarrage      |
 | `DIGEST_ENABLED`              | `false`               | Autorise l'envoi du récap quotidien par email (chaque compte l'active) |
 | `DIGEST_HOUR`                 | `8`                   | Heure d'envoi du récap (fuseau `TIMEZONE`)                        |
 | `SMTP_HOST` / `SMTP_PORT`     | *(vide)* / `587`      | Serveur d'envoi ; en dev, Mailpit est déjà configuré              |
@@ -318,6 +320,13 @@ docker compose -f docker-compose.prod.yml up -d --build
   `ALLOW_REGISTRATION=false`.
 - Sauvegardes : le volume `postgres_data` contient toutes les données, par
   exemple `docker compose -f docker-compose.prod.yml exec db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > sauvegarde.sql`.
+
+### Démo publique
+
+Le blueprint [`render.yaml`](render.yaml) déploie une démo sur
+[Render](https://render.com) (base, API, frontend, compte de démonstration
+fictif, inscriptions fermées) ; il demande un compte Render. Étapes, limites et
+autres hébergeurs : [docs/deploiement.md](docs/deploiement.md).
 
 ### Mise à jour depuis une version sans comptes
 

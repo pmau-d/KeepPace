@@ -4,8 +4,9 @@
     # ou, en local : python -m scripts.seed_demo
 
 Toutes les entreprises, personnes et adresses sont inventées (domaine réservé
-example.com). Le script refuse de s'exécuter en production et n'écrase rien :
-il s'arrête si le compte de démonstration existe déjà.
+example.com). Le script refuse de s'exécuter en production (sauf instance de
+démonstration, DEMO_MODE=true) et n'écrase rien : il s'arrête si le compte de
+démonstration existe déjà.
 """
 
 import os
@@ -86,8 +87,8 @@ COMMENTS = {
 
 
 def seed(db: Session) -> models.User:
-    if settings.ENVIRONMENT == "production":
-        raise SystemExit("Refusé : pas de données de démonstration en production.")
+    if settings.ENVIRONMENT == "production" and not settings.DEMO_MODE:
+        raise SystemExit("Refusé : pas de données de démonstration en production (DEMO_MODE=false).")
     if db.query(models.User).filter(models.User.email == DEMO_EMAIL).first():
         raise SystemExit(f"Le compte {DEMO_EMAIL} existe déjà : rien à faire.")
 
