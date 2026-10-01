@@ -177,7 +177,18 @@
 </template>
 
 <script setup lang="ts">
-import { Archive, CalendarRange, ListTodo, LogOut, Megaphone, Moon, Pencil, Sun, X } from '@lucide/vue'
+import {
+  Archive,
+  CalendarRange,
+  ListTodo,
+  LogOut,
+  Megaphone,
+  Moon,
+  Pencil,
+  SquareKanban,
+  Sun,
+  X,
+} from '@lucide/vue'
 import { computed, ref, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EditClientModal from './EditClientModal.vue'
@@ -219,6 +230,7 @@ const editingClient = ref<Client | null>(null)
 
 const navigation: NavItem[] = [
   { name: 'tasks', label: 'Toutes les tâches', icon: ListTodo, matches: ['tasks', 'task'] },
+  { name: 'board', label: 'Tableau', icon: SquareKanban, matches: ['board'] },
   { name: 'follow-up', label: 'À relancer', icon: Megaphone, matches: ['follow-up'] },
   { name: 'planning', label: 'Planning', icon: CalendarRange, matches: ['planning'] },
   { name: 'archives', label: 'Archives', icon: Archive, matches: ['archives'] },
