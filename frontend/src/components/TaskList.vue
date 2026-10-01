@@ -8,14 +8,7 @@
       v-else-if="!taskStore.tasks.length"
       class="flex flex-col items-center justify-center h-64 text-slate-400 dark:text-slate-500 text-center"
     >
-      <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="1"
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-        />
-      </svg>
+      <ClipboardList class="w-16 h-16 mb-4 opacity-50" aria-hidden="true" />
       <template v-if="hasFilters">
         <p class="text-lg font-medium">Aucune tâche ne correspond à ces filtres</p>
         <p class="text-sm mt-1">Modifiez la recherche ou les filtres pour élargir les résultats.</p>
@@ -77,6 +70,7 @@
 </template>
 
 <script setup lang="ts">
+import { ClipboardList } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useTaskStore } from '../stores/taskStore'
 import { groupTasksByDay } from '../utils/grouping'

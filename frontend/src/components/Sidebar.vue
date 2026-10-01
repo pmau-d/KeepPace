@@ -29,7 +29,7 @@
         ]"
         @click="item.name === 'tasks' && taskStore.filters.clientId && selectClient(null)"
       >
-        <span aria-hidden="true">{{ item.icon }}</span>
+        <component :is="item.icon" class="w-4 h-4 shrink-0" aria-hidden="true" />
         {{ item.label }}
       </RouterLink>
     </nav>
@@ -56,9 +56,7 @@
               title="Archiver l'entreprise"
               @click="handleArchiveCompany(group)"
             >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.archive" />
-              </svg>
+              <Archive class="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
           <div
@@ -91,9 +89,7 @@
               title="Modifier le client"
               @click="editingClient = client"
             >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.edit" />
-              </svg>
+              <Pencil class="w-3.5 h-3.5" aria-hidden="true" />
             </button>
             <button
               class="opacity-0 group-hover/client:opacity-100 focus:opacity-100 p-1.5 rounded-sm text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all shrink-0"
@@ -101,9 +97,7 @@
               title="Archiver le client"
               @click="handleArchiveClient(client)"
             >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.archive" />
-              </svg>
+              <Archive class="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -138,14 +132,7 @@
         :title="isDark ? 'Mode clair' : 'Mode sombre'"
         @click="toggleDark"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            :d="isDark ? icons.sun : icons.moon"
-          />
-        </svg>
+        <component :is="isDark ? Sun : Moon" class="w-4 h-4" aria-hidden="true" />
       </button>
       <button
         class="p-2 rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -153,9 +140,7 @@
         title="Se déconnecter"
         @click="logout"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="icons.logout" />
-        </svg>
+        <LogOut class="w-4 h-4" aria-hidden="true" />
       </button>
     </div>
   </aside>
@@ -169,7 +154,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { Archive, ListTodo, LogOut, Megaphone, Moon, Pencil, Sun } from 'lucide-vue-next'
+import { computed, ref, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EditClientModal from './EditClientModal.vue'
 import { confirm } from '../composables/useConfirm'
@@ -184,7 +170,7 @@ import type { Client } from '../types/api'
 interface NavItem {
   name: string
   label: string
-  icon: string
+  icon: Component
   matches: string[]
 }
 
@@ -205,18 +191,10 @@ const { isDark, toggle: toggleDark } = useDarkMode()
 const editingClient = ref<Client | null>(null)
 
 const navigation: NavItem[] = [
-  { name: 'tasks', label: 'Toutes les tâches', icon: '☰', matches: ['tasks', 'task'] },
-  { name: 'follow-up', label: 'À relancer', icon: '📣', matches: ['follow-up'] },
-  { name: 'archives', label: 'Archives', icon: '🗄️', matches: ['archives'] },
+  { name: 'tasks', label: 'Toutes les tâches', icon: ListTodo, matches: ['tasks', 'task'] },
+  { name: 'follow-up', label: 'À relancer', icon: Megaphone, matches: ['follow-up'] },
+  { name: 'archives', label: 'Archives', icon: Archive, matches: ['archives'] },
 ]
-
-const icons = {
-  archive: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4',
-  edit: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
-  sun: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z',
-  moon: 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z',
-  logout: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
-}
 
 function isActive(item: NavItem) {
   return item.matches.includes(String(route.name)) && !(item.name === 'tasks' && taskStore.filters.clientId)

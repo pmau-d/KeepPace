@@ -99,7 +99,7 @@
         class="flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 font-medium text-sm py-2 rounded-lg transition-colors disabled:opacity-50"
         @click="run(() => taskStore.closeTask(task.id), 'Tâche terminée.')"
       >
-        ✓ Terminer
+        <Check class="w-4 h-4" aria-hidden="true" /> Terminer
       </button>
       <button
         v-else
@@ -108,14 +108,14 @@
         class="flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-medium text-sm py-2 rounded-lg transition-colors disabled:opacity-50"
         @click="run(() => taskStore.reopenTask(task.id), 'Tâche réouverte.')"
       >
-        ↺ Réouvrir
+        <RotateCcw class="w-4 h-4" aria-hidden="true" /> Réouvrir
       </button>
       <button
         type="button"
         class="flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-medium text-sm py-2 rounded-lg transition-colors"
         @click="$emit('duplicate')"
       >
-        ⧉ Dupliquer
+        <Copy class="w-4 h-4" aria-hidden="true" /> Dupliquer
       </button>
     </div>
 
@@ -134,6 +134,7 @@
 </template>
 
 <script setup lang="ts">
+import { Check, Copy, RotateCcw } from 'lucide-vue-next'
 import { computed, reactive, ref, watch } from 'vue'
 import { confirm } from '../../composables/useConfirm'
 import { useTaskStore } from '../../stores/taskStore'

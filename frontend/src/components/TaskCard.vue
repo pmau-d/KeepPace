@@ -11,10 +11,7 @@
     @keydown.enter.prevent="$emit('open')"
     @keydown.space.prevent="$emit('open')"
   >
-    <span
-      :class="['w-2.5 h-2.5 rounded-full shrink-0 mx-auto', priorityDotClass]"
-      :title="priorityTitle"
-    ></span>
+    <PriorityFlag :priority="task.priority" class="mx-auto" />
 
     <div class="min-w-0">
       <div class="flex items-center gap-2 flex-wrap">
@@ -37,7 +34,7 @@
           class="text-[10px] text-slate-400 flex items-center gap-0.5"
           :title="`${task.comments_count} commentaire(s)`"
         >
-          💬 {{ task.comments_count }}
+          <MessageSquare class="w-3 h-3" aria-hidden="true" /> {{ task.comments_count }}
         </span>
       </div>
       <p v-if="task.description" class="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
@@ -62,14 +59,7 @@
           isOverdue ? 'text-red-500' : 'text-slate-500 dark:text-slate-400',
         ]"
       >
-        <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
+        <Calendar class="w-3 h-3 shrink-0" aria-hidden="true" />
         {{ formatDate(task.due_date) }}
       </span>
       <span v-else class="text-xs text-slate-300 dark:text-slate-600">—</span>
@@ -90,11 +80,13 @@
 </template>
 
 <script setup lang="ts">
+import { Calendar, MessageSquare } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import StatusBadge from './StatusBadge.vue'
+import PriorityFlag from './PriorityFlag.vue'
 import { useTaskStore } from '../stores/taskStore'
-import { PRIORITY_LABELS, formatDate, fullName, presenceColor, presenceLabel } from '../utils/labels'
-import type { TaskPriority, TaskSummary } from '../types/api'
+import { formatDate, fullName, presenceColor, presenceLabel } from '../utils/labels'
+import type { TaskSummary } from '../types/api'
 
 const props = defineProps<{ task: TaskSummary }>()
 defineEmits<{ open: [] }>()
@@ -110,14 +102,6 @@ const isOverdue = computed(() => {
   today.setHours(0, 0, 0, 0)
   return new Date(`${props.task.due_date}T00:00:00`) < today
 })
-
-const PRIORITY_DOTS: Record<TaskPriority, string> = {
-  HIGH: 'bg-red-500',
-  MEDIUM: 'bg-amber-400',
-  LOW: 'bg-green-500',
-}
-const priorityDotClass = computed(() => PRIORITY_DOTS[props.task.priority])
-const priorityTitle = computed(() => `Priorité ${PRIORITY_LABELS[props.task.priority].toLowerCase()}`)
 
 async function handleReopen() {
   reopening.value = true

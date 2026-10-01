@@ -21,9 +21,7 @@
           aria-label="Fermer"
           @click="$emit('close')"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X class="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 
@@ -69,9 +67,7 @@
               class="px-3 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-600 cursor-pointer border-t border-slate-200 dark:border-slate-600 font-medium flex items-center gap-1.5"
               @mousedown.prevent="createAndSelectCompany"
             >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
+              <Plus class="w-3.5 h-3.5" aria-hidden="true" />
               Créer "{{ companySearch }}"
             </div>
           </div>
@@ -150,6 +146,7 @@
 </template>
 
 <script setup lang="ts">
+import { Plus, X } from 'lucide-vue-next'
 import { ref, reactive, computed } from 'vue'
 import { errorMessage, httpStatus } from '../api/index'
 import { useClientStore } from '../stores/clientStore'
