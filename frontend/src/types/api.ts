@@ -40,6 +40,8 @@ export interface Client {
   archived_at: IsoDateTime | null
   company: Company
   presence_status: PresenceStatus | null
+  /** Tâches ni terminées ni archivées. */
+  open_tasks_count: number
 }
 
 export interface ClientPayload {

@@ -170,3 +170,12 @@ Task.comments_count = column_property(
     .correlate_except(TaskComment)
     .scalar_subquery()
 )
+
+# Tâches ouvertes (ni terminées ni archivées) de chaque client, pour la barre
+# latérale : calculé par sous-requête, sans charger les tâches.
+Client.open_tasks_count = column_property(
+    select(func.count(Task.id))
+    .where(Task.client_id == Client.id, Task.status != TaskStatus.DONE, Task.archived_at.is_(None))
+    .correlate_except(Task)
+    .scalar_subquery()
+)
