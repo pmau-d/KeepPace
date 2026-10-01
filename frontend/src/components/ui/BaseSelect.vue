@@ -146,7 +146,8 @@ function select(option: SelectOption<T>) {
 function scrollToActive() {
   panel.value
     ?.querySelector(`#${CSS.escape(optionId(activeIndex.value))}`)
-    ?.scrollIntoView({ block: 'nearest' })
+    // scrollIntoView n'existe pas partout (jsdom dans les tests)
+    ?.scrollIntoView?.({ block: 'nearest' })
 }
 
 function move(to: number) {
