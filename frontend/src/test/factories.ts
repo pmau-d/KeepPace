@@ -17,6 +17,7 @@ export function makeClient(overrides: Partial<Client> = {}): Client {
     archived_at: null,
     company: makeCompany(),
     presence_status: 'PRESENT',
+    open_tasks_count: 0,
     ...overrides,
   }
 }

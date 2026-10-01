@@ -282,3 +282,17 @@ def test_follow_up_includes_stale_waiting_tasks(client):
 
 def test_health(anon):
     assert anon.get("/health").json() == {"status": "ok"}
+
+
+def test_clients_count_their_open_tasks(client):
+    customer = make_client(client)
+    other = make_client(client, company="Globex", first_name="Bob")
+    ids = [
+        client.post("/tasks/", json={"client_id": customer["id"], "title": f"t{i}"}).json()["id"]
+        for i in range(3)
+    ]
+    client.post(f"/tasks/{ids[0]}/close")
+    client.delete(f"/tasks/{ids[1]}")
+
+    counts = {c["id"]: c["open_tasks_count"] for c in client.get("/clients/").json()}
+    assert counts == {customer["id"]: 1, other["id"]: 0}
