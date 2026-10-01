@@ -1,0 +1,56 @@
+# Blueprint Render : démo publique de KeepPace (données fictives).
+# Déployer : https://render.com/deploy?repo=https://github.com/pmau-d/KeepPace
+# Détails, limites de l'offre gratuite et alternatives : docs/deploiement.md
+
+databases:
+  - name: keeppace-db
+    plan: free
+    databaseName: keeppace
+    user: keeppace
+
+services:
+  # API FastAPI (image de production : migrations puis uvicorn)
+  - type: web
+    name: keeppace-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: keeppace-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: "1"
+      # Démo : compte demo@example.com créé au premier démarrage, inscriptions fermées
+      - key: DEMO_MODE
+        value: "true"
+      - key: ALLOW_REGISTRATION
+        value: "false"
+      - key: TIMEZONE
+        value: Europe/Paris
+
+  # Frontend : fichiers statiques servis par nginx, /api relayé vers l'API
+  - type: web
+    name: keeppace
+    runtime: docker
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: "80"
+      - key: BACKEND_URL
+        fromService:
+          name: keeppace-api
+          type: web
+          property: hostport
