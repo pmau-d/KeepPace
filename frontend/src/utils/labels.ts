@@ -1,6 +1,7 @@
 // Libellés et formats d'affichage partagés (badges, historique, filtres).
 
-import type { FollowUpReason, PresenceStatus, TaskLog, TaskPriority, TaskStatus } from '../types/api'
+import type { Client, FollowUpReason, PresenceStatus, TaskLog, TaskPriority, TaskStatus } from '../types/api'
+import { addDays, formatCompactDate, parseIsoDate } from './dates'
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
   TODO: 'À faire',
@@ -106,5 +107,31 @@ export function formatLogValue(log: TaskLog, side: 'old' | 'new'): string | null
       return value === 'true' ? 'Archivée' : null
     default:
       return value
+  }
+}
+
+/**
+ * Explication courte de la présence d'un client, affichée sur ses tâches :
+ * « Absent jusqu'au ven. 10 oct. », « Part le lun. 6 oct. »… null s'il est présent.
+ */
+export function presenceNote(
+  client: Pick<Client, 'presence_status' | 'absence_start_date' | 'absence_end_date'>,
+  today: Date = new Date(),
+): string | null {
+  const start = parseIsoDate(client.absence_start_date)
+  const end = parseIsoDate(client.absence_end_date)
+  const day = (date: Date) => formatCompactDate(date, today)
+  switch (client.presence_status) {
+    case 'LEAVING_SOON':
+      return start ? `Part le ${day(start)}` : 'Part bientôt'
+    case 'ABSENT':
+      return end ? `Absent jusqu'au ${day(end)}` : 'Absent, retour non daté'
+    case 'SOON_BACK':
+      // La fin d'absence est le dernier jour absent : le retour est le lendemain.
+      return end ? `De retour le ${day(addDays(end, 1))}` : 'Bientôt de retour'
+    case 'RECENTLY_BACK':
+      return end ? `Rentré le ${day(addDays(end, 1))}` : 'Rentré récemment'
+    default:
+      return null
   }
 }

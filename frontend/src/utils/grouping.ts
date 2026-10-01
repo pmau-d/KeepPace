@@ -1,7 +1,9 @@
 // Regroupement des tâches par jour d'échéance, dans l'ordre renvoyé par l'API
-// (échéance, puis priorité).
+// (échéance, puis priorité). Un seul format de titre : « Aujourd'hui »,
+// « Demain », puis « Mercredi 7 octobre » (année seulement si elle diffère).
 
 import type { TaskSummary } from '../types/api'
+import { daysBetween, formatDayHeading, parseIsoDate, startOfDay } from './dates'
 
 export interface TaskGroup<T extends TaskSummary = TaskSummary> {
   key: string
@@ -10,29 +12,13 @@ export interface TaskGroup<T extends TaskSummary = TaskSummary> {
   tasks: T[]
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
-function startOfDay(date: Date | string | number): Date {
-  const copy = new Date(date)
-  copy.setHours(0, 0, 0, 0)
-  return copy
-}
-
-function capitalize(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1)
-}
-
 export function dayLabel(dueDate: string | null, today: Date = new Date()): string {
-  if (!dueDate) return 'Sans échéance'
-  const due = startOfDay(new Date(`${dueDate}T00:00:00`))
-  const diff = Math.round((due.getTime() - startOfDay(today).getTime()) / DAY_MS)
-  if (diff < 0) return `En retard — ${due.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })}`
+  const due = parseIsoDate(dueDate)
+  if (!due) return 'Sans échéance'
+  const diff = daysBetween(today, due)
   if (diff === 0) return "Aujourd'hui"
   if (diff === 1) return 'Demain'
-  if (diff <= 7) {
-    return capitalize(due.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' }))
-  }
-  return due.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+  return formatDayHeading(due, today)
 }
 
 export function groupTasksByDay<T extends TaskSummary>(tasks: T[], today: Date = new Date()): TaskGroup<T>[] {
@@ -41,7 +27,8 @@ export function groupTasksByDay<T extends TaskSummary>(tasks: T[], today: Date =
   const todayStart = startOfDay(today)
   for (const task of tasks) {
     // Toutes les tâches en retard forment un seul groupe, en tête.
-    const overdue = Boolean(task.due_date) && new Date(`${task.due_date}T00:00:00`) < todayStart
+    const due = parseIsoDate(task.due_date)
+    const overdue = due !== null && due < todayStart
     const key = overdue ? 'overdue' : (task.due_date ?? 'none')
     let group = byKey.get(key)
     if (!group) {
