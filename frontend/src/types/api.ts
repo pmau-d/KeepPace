@@ -4,6 +4,7 @@
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE'
 export type TaskPriority = 'HIGH' | 'MEDIUM' | 'LOW'
 export type PresenceStatus = 'PRESENT' | 'LEAVING_SOON' | 'ABSENT' | 'SOON_BACK' | 'RECENTLY_BACK'
+export type Recurrence = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
 export type FollowUpReason = 'OVERDUE' | 'DUE_TODAY' | 'CLIENT_LEAVING' | 'CLIENT_BACK' | 'WAITING'
 
 /** Date sans heure, au format AAAA-MM-JJ. */
@@ -81,6 +82,9 @@ export interface TaskSummary {
   sub_status: string | null
   priority: TaskPriority
   due_date: IsoDate | null
+  /** null : tâche ponctuelle. */
+  recurrence: Recurrence | null
+  recurrence_interval: number
   created_at: IsoDateTime
   updated_at: IsoDateTime
   archived_at: IsoDateTime | null
@@ -111,6 +115,8 @@ export interface TaskCreatePayload {
   sub_status?: string | null
   priority?: TaskPriority
   due_date?: IsoDate | null
+  recurrence?: Recurrence | null
+  recurrence_interval?: number
 }
 
 export interface TaskUpdatePayload {
@@ -121,6 +127,8 @@ export interface TaskUpdatePayload {
   sub_status?: string | null
   priority?: TaskPriority
   due_date?: IsoDate | null
+  recurrence?: Recurrence | null
+  recurrence_interval?: number
   /** Note enregistrée dans l'historique, pas dans la tâche. */
   comment?: string
 }

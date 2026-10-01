@@ -57,6 +57,8 @@
       <DatePicker id="task-due" v-model="form.due_date" placeholder="Sans échéance" />
     </div>
 
+    <RecurrenceFields v-model:recurrence="form.recurrence" v-model:interval="form.recurrence_interval" />
+
     <div>
       <label for="task-description" :class="labelClass">Description</label>
       <textarea
@@ -172,10 +174,18 @@ import { useTaskStore } from '../../stores/taskStore'
 import { useToastStore } from '../../stores/toast'
 import BaseSelect from '../ui/BaseSelect.vue'
 import DatePicker from '../ui/DatePicker.vue'
+import RecurrenceFields from './RecurrenceFields.vue'
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '../../utils/options'
 import { addDays, formatCompactDate } from '../../utils/dates'
 import { followUpDraft, mailtoHref } from '../../utils/mailto'
-import type { Task, TaskPriority, TaskStatus, TaskSummary, TaskUpdatePayload } from '../../types/api'
+import type {
+  Recurrence,
+  Task,
+  TaskPriority,
+  TaskStatus,
+  TaskSummary,
+  TaskUpdatePayload,
+} from '../../types/api'
 
 const props = defineProps<{ task: Task }>()
 const emit = defineEmits<{ updated: [task: TaskSummary]; duplicate: []; archived: [] }>()
@@ -212,7 +222,16 @@ const labelClass = 'block text-xs font-medium text-slate-500 dark:text-slate-400
 const inputClass =
   'w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 placeholder-slate-400'
 
-const EDITABLE = ['title', 'status', 'priority', 'sub_status', 'due_date', 'description'] as const
+const EDITABLE = [
+  'title',
+  'status',
+  'priority',
+  'sub_status',
+  'due_date',
+  'description',
+  'recurrence',
+  'recurrence_interval',
+] as const
 type EditableField = (typeof EDITABLE)[number]
 
 interface EditForm {
@@ -222,6 +241,8 @@ interface EditForm {
   sub_status: string
   due_date: string
   description: string
+  recurrence: Recurrence | ''
+  recurrence_interval: number
   comment: string
 }
 
@@ -237,6 +258,8 @@ function formFrom(task: Task): EditForm {
     sub_status: task.sub_status ?? '',
     due_date: task.due_date ?? '',
     description: task.description ?? '',
+    recurrence: task.recurrence ?? '',
+    recurrence_interval: task.recurrence_interval,
     comment: '',
   }
 }
@@ -247,7 +270,7 @@ watch(
 
 /** Champs réellement modifiés (chaînes vides envoyées comme null). */
 const changes = computed<TaskUpdatePayload>(() => {
-  const diff: Record<string, string | null> = {}
+  const diff: Record<string, string | number | null> = {}
   for (const field of EDITABLE satisfies readonly EditableField[]) {
     const value = form[field] === '' ? null : form[field]
     if (value !== (props.task[field] ?? null)) diff[field] = value

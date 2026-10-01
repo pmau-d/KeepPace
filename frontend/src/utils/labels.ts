@@ -1,6 +1,14 @@
 // Libellés et formats d'affichage partagés (badges, historique, filtres).
 
-import type { Client, FollowUpReason, PresenceStatus, TaskLog, TaskPriority, TaskStatus } from '../types/api'
+import type {
+  Client,
+  FollowUpReason,
+  PresenceStatus,
+  Recurrence,
+  TaskLog,
+  TaskPriority,
+  TaskStatus,
+} from '../types/api'
 import { addDays, formatCompactDate, parseIsoDate } from './dates'
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
@@ -8,6 +16,29 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
   IN_PROGRESS: 'En cours',
   BLOCKED: 'En attente client',
   DONE: 'Terminé',
+}
+
+export const RECURRENCE_LABELS: Record<Recurrence, string> = {
+  DAILY: 'Chaque jour',
+  WEEKLY: 'Chaque semaine',
+  MONTHLY: 'Chaque mois',
+  YEARLY: 'Chaque année',
+}
+
+const RECURRENCE_UNITS: Record<Recurrence, [string, string]> = {
+  DAILY: ['jour', 'jours'],
+  WEEKLY: ['semaine', 'semaines'],
+  MONTHLY: ['mois', 'mois'],
+  YEARLY: ['année', 'ans'],
+}
+
+/** « Chaque semaine », « Tous les 3 mois »… null pour une tâche ponctuelle. */
+export function recurrenceLabel(recurrence: Recurrence | null, interval = 1): string | null {
+  if (!recurrence) return null
+  if (interval <= 1) return RECURRENCE_LABELS[recurrence]
+  // « semaine » est le seul nom féminin : « toutes les 2 semaines », « tous les 3 mois ».
+  const every = recurrence === 'WEEKLY' ? 'Toutes les' : 'Tous les'
+  return `${every} ${interval} ${RECURRENCE_UNITS[recurrence][1]}`
 }
 
 export const PRIORITY_LABELS: Record<TaskPriority, string> = {
@@ -47,6 +78,9 @@ const FIELD_LABELS: Record<string, string> = {
   client_id: 'Client',
   archived: 'Archivage',
   comment: 'Commentaire',
+  recurrence: 'Récurrence',
+  recurrence_interval: 'Intervalle de récurrence',
+  next_occurrence: 'Occurrence suivante',
 }
 
 /** Une valeur inattendue (nouvelle version de l'API) ne doit pas casser l'affichage. */
@@ -102,7 +136,10 @@ export function formatLogValue(log: TaskLog, side: 'old' | 'new'): string | null
     case 'priority':
       return PRIORITY_LABELS[value as TaskPriority] ?? value
     case 'due_date':
+    case 'next_occurrence':
       return formatDate(value)
+    case 'recurrence':
+      return RECURRENCE_LABELS[value as Recurrence] ?? value
     case 'archived':
       return value === 'true' ? 'Archivée' : null
     default:

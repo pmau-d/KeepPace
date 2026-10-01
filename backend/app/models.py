@@ -7,6 +7,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -16,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import column_property, relationship
 
 from app.database import Base
-from app.enums import TaskPriority, TaskStatus
+from app.enums import Recurrence, TaskPriority, TaskStatus
 from app.types import UTCDateTime, utcnow
 
 
@@ -107,6 +108,9 @@ class Task(Base):
     sub_status = Column(String, nullable=True)  # statut personnalisé libre
     priority = Column(_enum(TaskPriority, "task_priority"), nullable=False, default=TaskPriority.MEDIUM)
     due_date = Column(Date, nullable=True)
+    # Récurrence : null = tâche ponctuelle. Tous les `recurrence_interval` jours/semaines/mois/ans.
+    recurrence = Column(_enum(Recurrence, "task_recurrence"), nullable=True)
+    recurrence_interval = Column(Integer, nullable=False, default=1, server_default="1")
     created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
     updated_at = Column(
         UTCDateTime, nullable=False, default=utcnow, server_default=func.now(), onupdate=utcnow
