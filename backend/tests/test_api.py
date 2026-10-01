@@ -296,3 +296,28 @@ def test_clients_count_their_open_tasks(client):
 
     counts = {c["id"]: c["open_tasks_count"] for c in client.get("/clients/").json()}
     assert counts == {customer["id"]: 1, other["id"]: 0}
+
+
+def test_snooze_postpones_the_due_date_and_logs_it(client):
+    customer = make_client(client)
+    task = client.post(
+        "/tasks/", json={"client_id": customer["id"], "title": "Relancer", "status": "BLOCKED"}
+    ).json()
+
+    response = client.post(f"/tasks/{task['id']}/snooze", json={"days": 3, "comment": "absent ce matin"})
+    assert response.status_code == 200
+    assert response.json()["due_date"] == (today() + timedelta(days=3)).isoformat()
+    log = client.get(f"/tasks/{task['id']}/logs").json()[-1]
+    assert log["field_changed"] == "due_date"
+    assert log["old_value"] is None
+    assert log["comment"] == "Relance reportée de 3 jours — absent ce matin"
+
+    assert client.post(f"/tasks/{task['id']}/snooze", json={"days": 0}).status_code == 422
+    client.post(f"/tasks/{task['id']}/close")
+    assert client.post(f"/tasks/{task['id']}/snooze", json={"days": 1}).status_code == 409
+
+
+def test_snooze_is_scoped_to_the_owner(client, other_client):
+    customer = make_client(client)
+    task = client.post("/tasks/", json={"client_id": customer["id"], "title": "x"}).json()
+    assert other_client.post(f"/tasks/{task['id']}/snooze", json={"days": 1}).status_code == 404
