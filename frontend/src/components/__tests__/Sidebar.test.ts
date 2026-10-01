@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createMemoryHistory, createRouter } from 'vue-router'
+import { createMemoryHistory } from 'vue-router'
+import { createAppRouter } from '../../router/index'
 import Sidebar from '../Sidebar.vue'
 import { useClientStore } from '../../stores/clientStore'
 import { makeClient, makeCompany } from '../../test/factories'
@@ -9,14 +10,8 @@ import { makeClient, makeCompany } from '../../test/factories'
 vi.mock('../../api/index', () => ({ tasksApi: { list: vi.fn() } }))
 
 function mountSidebar(props: Record<string, unknown> = {}) {
-  const router = createRouter({
-    history: createMemoryHistory(),
-    routes: ['tasks', 'task', 'follow-up', 'archives'].map((name) => ({
-      path: `/${name}`,
-      name,
-      component: { template: '<div />' },
-    })),
-  })
+  // Le vrai routeur : chaque entrée du menu doit correspondre à une route existante.
+  const router = createAppRouter(createMemoryHistory())
   return mount(Sidebar, { props, global: { plugins: [router] }, attachTo: document.body })
 }
 
