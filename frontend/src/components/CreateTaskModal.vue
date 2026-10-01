@@ -196,7 +196,7 @@
 </template>
 
 <script setup lang="ts">
-import { Check, CircleAlert, Copy, Plus, X } from 'lucide-vue-next'
+import { Check, CircleAlert, Copy, Plus, X } from '@lucide/vue'
 import { ref, reactive, computed } from 'vue'
 import { useClientStore } from '../stores/clientStore'
 import { useTaskStore } from '../stores/taskStore'

@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { MessageSquare, Send } from 'lucide-vue-next'
+import { MessageSquare, Send } from '@lucide/vue'
 import { ref } from 'vue'
 import { tasksApi } from '../../api/index'
 import { confirm } from '../../composables/useConfirm'

@@ -126,7 +126,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
+import { CalendarDays, ChevronLeft, ChevronRight, X } from '@lucide/vue'
 import { usePopover } from '../../composables/usePopover'
 import {
   addDays,

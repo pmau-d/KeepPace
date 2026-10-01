@@ -77,7 +77,7 @@
 
 <script setup lang="ts" generic="T extends string">
 import { computed, nextTick, ref, useId, type Component } from 'vue'
-import { Check, ChevronDown } from 'lucide-vue-next'
+import { Check, ChevronDown } from '@lucide/vue'
 import { usePopover } from '../../composables/usePopover'
 
 export interface SelectOption<V extends string = string> {

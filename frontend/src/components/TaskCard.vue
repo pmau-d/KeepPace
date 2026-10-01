@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { Calendar, MessageSquare } from 'lucide-vue-next'
+import { Calendar, MessageSquare } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import PriorityFlag from './PriorityFlag.vue'
