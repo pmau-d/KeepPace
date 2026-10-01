@@ -26,8 +26,14 @@ class UserRead(BaseModel):
     id: str
     email: str
     full_name: str | None = None
+    digest_opt_in: bool = False
 
     model_config = {"from_attributes": True}
+
+
+class UserUpdate(BaseModel):
+    full_name: OptionalName = None
+    digest_opt_in: bool | None = None
 
 
 # ─── Company ────────────────────────────────────────────────────────────────
@@ -198,3 +204,26 @@ class TaskPage(BaseModel):
 
 class FollowUpItem(TaskSummary):
     follow_up_reason: FollowUpReason
+
+
+# ─── Récap quotidien ────────────────────────────────────────────────────────
+
+
+class DigestClient(BaseModel):
+    id: str
+    name: str
+    on: date | None = None
+
+
+class Digest(BaseModel):
+    day: date
+    follow_up: list[FollowUpItem]
+    follow_up_total: int
+    counts: dict[FollowUpReason, int]
+    leaving: list[DigestClient]
+    returning: list[DigestClient]
+    email_available: bool
+
+    @property
+    def is_empty(self) -> bool:
+        return not (self.follow_up_total or self.leaving or self.returning)

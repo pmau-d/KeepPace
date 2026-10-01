@@ -38,9 +38,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function setDigestOptIn(value: boolean) {
+    user.value = (await authApi.update({ digest_opt_in: value })).data
+  }
+
   function clearSession() {
     user.value = null
   }
 
-  return { user, checked, isAuthenticated, fetchMe, login, register, logout, clearSession }
+  return { user, checked, isAuthenticated, fetchMe, login, register, logout, setDigestOptIn, clearSession }
 })

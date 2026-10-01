@@ -3,6 +3,7 @@ import type {
   Client,
   ClientPayload,
   Company,
+  Digest,
   FollowUpItem,
   RegisterPayload,
   Task,
@@ -79,6 +80,13 @@ export const authApi = {
   login: (data: { email: string; password: string }) => api.post<User>('/auth/login', data),
   register: (data: RegisterPayload) => api.post<User>('/auth/register', data),
   logout: () => api.post<void>('/auth/logout'),
+  update: (data: { full_name?: string | null; digest_opt_in?: boolean }) => api.put<User>('/auth/me', data),
+}
+
+// ─── Récap quotidien ───────────────────────────────────────────────────────
+export const digestApi = {
+  get: () => api.get<Digest>('/digest/'),
+  sendNow: () => api.post<{ sent_to: string }>('/digest/send'),
 }
 
 // ─── Companies ──────────────────────────────────────────────────────────────
