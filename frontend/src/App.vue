@@ -47,25 +47,38 @@
     </Transition>
   </Teleport>
 
+  <template v-if="auth.isAuthenticated">
+    <CommandPalette v-model:open="ui.palette.value" :commands="commands" />
+    <ShortcutsHelp v-model:open="ui.help.value" :commands="commands" />
+  </template>
+
   <ToastContainer />
   <ConfirmDialog />
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Menu } from '@lucide/vue'
 import Sidebar from './components/Sidebar.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import CommandPalette from './components/CommandPalette.vue'
+import ShortcutsHelp from './components/ShortcutsHelp.vue'
+import { buildCommands, ui } from './commands/index'
+import { useDensity } from './composables/useDensity'
+import { useShortcuts } from './composables/useShortcuts'
+import { tasksApi } from './api/index'
 import { useDarkMode } from './composables/useDarkMode'
 import { useSidebar } from './composables/useSidebar'
 import { useAuthStore } from './stores/auth'
 import { useClientStore } from './stores/clientStore'
 import { useTaskStore } from './stores/taskStore'
 
-useDarkMode()
+const { toggle: toggleDark } = useDarkMode()
+const { toggle: toggleDensity } = useDensity()
 const route = useRoute()
+const router = useRouter()
 const { open: drawerOpen, show: openDrawer, close: closeDrawer } = useSidebar()
 
 // Le tiroir se referme dès qu'on change de page.
@@ -73,6 +86,24 @@ watch(() => route.fullPath, closeDrawer)
 const auth = useAuthStore()
 const clientStore = useClientStore()
 const taskStore = useTaskStore()
+
+const commands = computed(() =>
+  buildCommands({
+    router,
+    toggleDark,
+    toggleDensity,
+    exportUrl: () => tasksApi.exportUrl(taskStore.queryParams()),
+  }),
+)
+
+// Raccourcis : ceux des commandes (n, /, g t…) + Ctrl/⌘ K pour la palette.
+useShortcuts(() => {
+  if (!auth.isAuthenticated) return []
+  return [
+    { keys: ['k'], mod: true, run: () => (ui.palette.value = !ui.palette.value) },
+    ...commands.value.filter((c) => c.hint).map((c) => ({ keys: c.hint!, run: c.run })),
+  ]
+})
 
 // Changement de compte : on recharge les clients, et on vide tout à la déconnexion.
 watch(
