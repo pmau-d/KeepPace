@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { X } from 'lucide-vue-next'
+import { X } from '@lucide/vue'
 import { nextTick, ref, watch } from 'vue'
 import StatusBadge from '../StatusBadge.vue'
 import PriorityBadge from '../PriorityBadge.vue'

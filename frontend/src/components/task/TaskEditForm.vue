@@ -130,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { Check, Copy, RotateCcw } from 'lucide-vue-next'
+import { Check, Copy, RotateCcw } from '@lucide/vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { confirm } from '../../composables/useConfirm'
 import { useTaskStore } from '../../stores/taskStore'

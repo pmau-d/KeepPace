@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { PartyPopper } from 'lucide-vue-next'
+import { PartyPopper } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { tasksApi } from '../api/index'
 import TaskCard from '../components/TaskCard.vue'

@@ -154,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { Archive, ListTodo, LogOut, Megaphone, Moon, Pencil, Sun } from 'lucide-vue-next'
+import { Archive, ListTodo, LogOut, Megaphone, Moon, Pencil, Sun } from '@lucide/vue'
 import { computed, ref, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EditClientModal from './EditClientModal.vue'

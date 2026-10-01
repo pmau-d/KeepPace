@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { Check, X } from 'lucide-vue-next'
+import { Check, X } from '@lucide/vue'
 import { ref, reactive } from 'vue'
 import { errorMessage } from '../api/index'
 import { useClientStore } from '../stores/clientStore'
