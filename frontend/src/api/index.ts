@@ -109,6 +109,8 @@ export const tasksApi = {
   update: (id: string, data: TaskUpdatePayload) => api.put<Task>(`/tasks/${id}`, data),
   close: (id: string) => api.post<Task>(`/tasks/${id}/close`),
   reopen: (id: string) => api.post<Task>(`/tasks/${id}/reopen`),
+  snooze: (id: string, days: number, comment?: string) =>
+    api.post<Task>(`/tasks/${id}/snooze`, { days, comment }),
   archive: (id: string) => api.delete<void>(`/tasks/${id}`),
   restore: (id: string) => api.post<Task>(`/tasks/${id}/restore`),
   getLogs: (id: string) => api.get<TaskLog[]>(`/tasks/${id}/logs`),
