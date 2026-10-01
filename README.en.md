@@ -283,7 +283,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 The [`render.yaml`](render.yaml) blueprint deploys a demo on
 [Render](https://render.com) (database, API, frontend, fictitious demo account,
 sign-ups closed); it requires a Render account. Steps, limits and other hosts:
-[docs/deploiement.md](docs/deploiement.md) (French).
+[docs/deploiement.en.md](docs/deploiement.en.md).
 
 ## Business rules
 
@@ -319,14 +319,15 @@ Open tasks whose client is neither absent nor about to return, by urgency:
 
 ## Contributing
 
-Contributions are welcome: read [CONTRIBUTING.md](CONTRIBUTING.md) (setup,
-commit conventions, checks before a pull request; in French, but issues and pull
-requests in English are fine). Release notes are in [CHANGELOG.md](CHANGELOG.md).
+Contributions are welcome: read [CONTRIBUTING.en.md](CONTRIBUTING.en.md) (setup,
+commit conventions, checks before a pull request; issues and pull requests in
+English are fine) and the [code of conduct](CODE_OF_CONDUCT.en.md). Release notes
+are in [CHANGELOG.md](CHANGELOG.md) (in French).
 
 ## Security
 
 To report a vulnerability, do not open a public issue: follow
-[SECURITY.md](SECURITY.md).
+[SECURITY.en.md](SECURITY.en.md).
 
 ## License
 

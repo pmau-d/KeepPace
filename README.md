@@ -371,7 +371,8 @@ ordre d'urgence :
 ## Contribuer
 
 Les contributions sont les bienvenues : lisez [CONTRIBUTING.md](CONTRIBUTING.md)
-(installation, conventions de commit, vérifications avant une pull request).
+(installation, conventions de commit, vérifications avant une pull request) et le
+[code de conduite](CODE_OF_CONDUCT.md).
 L'historique des versions est tenu dans [CHANGELOG.md](CHANGELOG.md).
 
 ## Sécurité

@@ -1,5 +1,7 @@
 # Code de conduite
 
+🇫🇷 Français · [🇬🇧 English](CODE_OF_CONDUCT.en.md)
+
 Ce code de conduite est adapté du [Contributor Covenant](https://www.contributor-covenant.org/fr/version/2/1/code_of_conduct/), version 2.1.
 
 ## Notre engagement

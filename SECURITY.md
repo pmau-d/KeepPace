@@ -1,5 +1,7 @@
 # Politique de sécurité
 
+🇫🇷 Français · [🇬🇧 English](SECURITY.en.md)
+
 ## Versions prises en charge
 
 Seule la dernière version publiée (branche `main`) reçoit des correctifs de
