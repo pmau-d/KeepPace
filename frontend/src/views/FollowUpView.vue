@@ -17,7 +17,9 @@
     </button>
   </header>
 
-  <main class="flex-1 overflow-y-auto p-6">
+  <main class="flex-1 overflow-y-auto p-6 space-y-6">
+    <DailyDigest :version="version" />
+
     <div v-if="loading && !items.length" class="flex justify-center items-center h-40">
       <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
@@ -49,6 +51,7 @@
 import { PartyPopper } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { tasksApi } from '../api/index'
+import DailyDigest from '../components/DailyDigest.vue'
 import TaskCard from '../components/TaskCard.vue'
 import TaskSlideOver from '../components/task/TaskSlideOver.vue'
 import { FOLLOW_UP_REASONS } from '../utils/labels'
@@ -57,6 +60,8 @@ import type { FollowUpItem, FollowUpReason } from '../types/api'
 const items = ref<FollowUpItem[]>([])
 const loading = ref(false)
 const selectedId = ref<string | null>(null)
+// Incrémenté à chaque rechargement pour actualiser aussi le récap
+const version = ref(0)
 
 // L'API renvoie les tâches déjà triées par urgence : on garde cet ordre.
 const groups = computed(() => {
@@ -73,6 +78,7 @@ async function load() {
   loading.value = true
   try {
     items.value = (await tasksApi.followUp()).data
+    version.value++
   } finally {
     loading.value = false
   }

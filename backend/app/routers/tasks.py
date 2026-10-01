@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy import and_, asc, case, nulls_last, or_, select
+from sqlalchemy import asc, nulls_last, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app import models, schemas
@@ -11,7 +11,8 @@ from app.archive import archive_task, restore_task
 from app.csv_export import tasks_to_csv
 from app.database import get_db
 from app.deps import get_current_user
-from app.enums import FollowUpReason, PresenceStatus, TaskPriority, TaskStatus
+from app.enums import PresenceStatus, TaskStatus
+from app.follow_up import PRIORITY_ORDER, follow_up_tasks
 from app.presence import enrich_task, enrich_tasks, presence_status_expr, today
 from app.recurrence import describe, next_occurrence
 from app.repository import get_client, get_task, owned
@@ -30,14 +31,6 @@ TRACKED_FIELDS = [
     "recurrence",
     "recurrence_interval",
 ]
-
-# Ordre de priorité pour le tri : HIGH < MEDIUM < LOW (HIGH en premier)
-PRIORITY_ORDER = case(
-    (models.Task.priority == TaskPriority.HIGH, 1),
-    (models.Task.priority == TaskPriority.MEDIUM, 2),
-    (models.Task.priority == TaskPriority.LOW, 3),
-    else_=4,
-)
 
 
 def _log(task: models.Task, field: str, old, new, comment: str | None = None, **labels) -> models.TaskLog:
@@ -157,53 +150,10 @@ def list_tasks(
     return {"items": enrich_tasks(db, tasks), "total": total, "limit": limit, "offset": offset}
 
 
-# Au-delà de ce délai sans mise à jour, une tâche « en attente client » est à relancer.
-WAITING_DAYS = 3
-FOLLOW_UP_LIMIT = 200
-# Un client absent (ou pas encore rentré) ne peut pas être relancé.
-UNREACHABLE = (PresenceStatus.ABSENT.value, PresenceStatus.SOON_BACK.value)
-FOLLOW_UP_ORDER = list(FollowUpReason)
-
-
 @router.get("/follow-up", response_model=list[schemas.FollowUpItem])
 def follow_up(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    """Tâches ouvertes à relancer aujourd'hui, les plus urgentes d'abord.
-
-    Motifs, par ordre d'urgence : échéance dépassée, échéance aujourd'hui,
-    client qui part dans les 3 jours, client rentré depuis moins de 5 jours,
-    tâche en attente client sans mise à jour depuis 3 jours. Les clients
-    absents ou pas encore rentrés sont exclus.
-    """
-    on = today()
-    presence = presence_status_expr(on)
-    rank = case(
-        (models.Task.due_date < on, FOLLOW_UP_ORDER.index(FollowUpReason.OVERDUE)),
-        (models.Task.due_date == on, FOLLOW_UP_ORDER.index(FollowUpReason.DUE_TODAY)),
-        (presence == PresenceStatus.LEAVING_SOON.value, FOLLOW_UP_ORDER.index(FollowUpReason.CLIENT_LEAVING)),
-        (presence == PresenceStatus.RECENTLY_BACK.value, FOLLOW_UP_ORDER.index(FollowUpReason.CLIENT_BACK)),
-        (
-            and_(
-                models.Task.status == TaskStatus.BLOCKED,
-                models.Task.updated_at < utcnow() - timedelta(days=WAITING_DAYS),
-            ),
-            FOLLOW_UP_ORDER.index(FollowUpReason.WAITING),
-        ),
-        else_=None,
-    ).label("rank")
-    rows = (
-        owned(db, models.Task, user)
-        .join(models.Client, models.Task.client_id == models.Client.id)
-        .options(joinedload(models.Task.client).joinedload(models.Client.company))
-        .filter(models.Task.status != TaskStatus.DONE, presence.not_in(UNREACHABLE), rank.is_not(None))
-        .add_columns(rank)
-        .order_by(rank, nulls_last(asc(models.Task.due_date)), asc(PRIORITY_ORDER), models.Task.id)
-        .limit(FOLLOW_UP_LIMIT)
-        .all()
-    )
-    tasks = enrich_tasks(db, [task for task, _ in rows])
-    for task, (_, position) in zip(tasks, rows, strict=True):
-        task.follow_up_reason = FOLLOW_UP_ORDER[position]
-    return tasks
+    """Tâches ouvertes à relancer aujourd'hui, les plus urgentes d'abord (voir app/follow_up.py)."""
+    return follow_up_tasks(db, user)
 
 
 @router.get("/export.csv", response_class=Response, responses={200: {"content": {"text/csv": {}}}})

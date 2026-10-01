@@ -60,7 +60,7 @@ export function makeLog(overrides: Partial<TaskLog> = {}): TaskLog {
 }
 
 export function makeUser(overrides: Partial<User> = {}): User {
-  return { id: 'user-1', email: 'a@example.com', full_name: null, ...overrides }
+  return { id: 'user-1', email: 'a@example.com', full_name: null, digest_opt_in: false, ...overrides }
 }
 
 /** Réponse axios minimale pour les mocks. */
