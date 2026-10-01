@@ -14,3 +14,14 @@ def test_demo_seed_creates_a_usable_account(anon):
 
     with SessionLocal() as db, pytest.raises(SystemExit):
         seed(db)  # jamais deux fois
+
+
+def test_demo_seed_is_refused_in_production_unless_demo_mode(anon, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    with SessionLocal() as db, pytest.raises(SystemExit, match="DEMO_MODE"):
+        seed(db)
+    monkeypatch.setattr(settings, "DEMO_MODE", True)
+    with SessionLocal() as db:
+        assert seed(db).email == DEMO_EMAIL

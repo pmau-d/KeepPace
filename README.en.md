@@ -184,6 +184,8 @@ All configuration goes through environment variables, read from `.env` (see
 | `TIMEZONE`                    | `Europe/Paris`        | Time zone used to compute “today”                                 |
 | `HTTP_PORT`                   | `80`                  | Port published by nginx (production)                              |
 | `WEB_CONCURRENCY`             | `2`                   | Number of API processes (production)                              |
+| `BACKEND_URL`                 | `backend:8000`        | API host and port as seen by nginx (frontend image)               |
+| `DEMO_MODE`                   | `false`               | Public demo: creates the demo account at startup                  |
 | `DIGEST_ENABLED`              | `false`               | Allows the daily email digest (each account opts in)              |
 | `DIGEST_HOUR`                 | `8`                   | Digest sending hour (in `TIMEZONE`)                               |
 | `SMTP_HOST` / `SMTP_PORT`     | *(empty)* / `587`     | Mail server; Mailpit is preconfigured in development              |
@@ -275,6 +277,13 @@ docker compose -f docker-compose.prod.yml up -d --build
 - Once your accounts exist, close sign-ups with `ALLOW_REGISTRATION=false`.
 - Backups: the `postgres_data` volume holds all the data, for example
   `docker compose -f docker-compose.prod.yml exec db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup.sql`.
+
+### Public demo
+
+The [`render.yaml`](render.yaml) blueprint deploys a demo on
+[Render](https://render.com) (database, API, frontend, fictitious demo account,
+sign-ups closed); it requires a Render account. Steps, limits and other hosts:
+[docs/deploiement.md](docs/deploiement.md) (French).
 
 ## Business rules
 

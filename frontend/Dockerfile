@@ -20,7 +20,9 @@ RUN npm run build
 
 # ─── Production ─────────────────────────────────────────────────────────────
 FROM nginx:1.29-alpine AS prod
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Modèle traité par l'image nginx au démarrage (variable BACKEND_URL)
+ENV BACKEND_URL=backend:8000
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY nginx-security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80

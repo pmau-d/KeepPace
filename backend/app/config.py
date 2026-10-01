@@ -44,6 +44,10 @@ class Settings(BaseSettings):
     # Adresse publique de l'application, pour les liens des emails.
     APP_URL: str = "http://localhost:3000"
 
+    # Démo publique : crée le compte de démonstration (données fictives) au
+    # démarrage s'il n'existe pas, même en production. Jamais pour de vraies données.
+    DEMO_MODE: bool = False
+
     @model_validator(mode="after")
     def _refuse_insecure_production(self):
         if self.ENVIRONMENT == "production" and (

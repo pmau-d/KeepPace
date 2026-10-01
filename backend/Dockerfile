@@ -31,6 +31,8 @@ COPY --from=deps /opt/venv /opt/venv
 COPY --chown=app:app alembic.ini ./
 COPY --chown=app:app alembic ./alembic
 COPY --chown=app:app app ./app
+# Données de démonstration fictives, utilisées seulement si DEMO_MODE=true
+COPY --chown=app:app scripts ./scripts
 COPY --chown=app:app docker-entrypoint.sh ./
 USER app
 EXPOSE 8000

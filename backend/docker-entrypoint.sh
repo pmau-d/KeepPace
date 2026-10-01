@@ -4,6 +4,11 @@ set -e
 
 alembic upgrade head
 
+# Instance de démonstration : compte et données fictives créés une seule fois.
+if [ "${DEMO_MODE:-false}" = "true" ]; then
+    python -m scripts.seed_demo || true
+fi
+
 # --proxy-headers : l'adresse IP réelle du client (limitation des tentatives
 # de connexion) vient de nginx. Le backend n'est joignable que par nginx
 # sur le réseau interne Docker, d'où l'autorisation de tous les relais.
