@@ -146,7 +146,7 @@ flowchart LR
 | Layer      | Technologies                                                        |
 | ---------- | ------------------------------------------------------------------- |
 | Frontend   | Vue 3.5 + TypeScript (strict), Vite, Pinia, Vue Router, Tailwind CSS 4, Axios |
-| Backend    | Python, FastAPI, SQLAlchemy 2, Alembic, Pydantic 2                  |
+| Backend    | Python 3.14, FastAPI, SQLAlchemy 2, Alembic, Pydantic 2             |
 | Security   | Argon2 (passwords), JWT in an httpOnly cookie, login rate limiting  |
 | Data       | PostgreSQL 15 (in-memory SQLite for tests)                          |
 | Quality    | pytest, ruff, vue-tsc, Vitest, ESLint, Prettier, GitHub Actions     |
@@ -211,11 +211,11 @@ digest, set `DIGEST_ENABLED=true` in `.env`: messages land in Mailpit
 
 ### Without Docker
 
-Backend (Python and a reachable PostgreSQL database):
+Backend (Python 3.14, 3.12 minimum, and a reachable PostgreSQL database):
 
 ```bash
 cd backend
-python3 -m venv .venv && source .venv/bin/activate
+python3.14 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 export DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/keeppace
 alembic upgrade head
