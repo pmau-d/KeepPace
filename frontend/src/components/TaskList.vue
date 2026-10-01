@@ -19,15 +19,26 @@
       </template>
     </div>
 
-    <div v-else :class="['space-y-6 transition-opacity', taskStore.loading && 'opacity-60']">
+    <div
+      v-else
+      :class="['transition-opacity', compact ? 'space-y-3' : 'space-y-6', taskStore.loading && 'opacity-60']"
+    >
       <p class="text-xs text-slate-400 px-1">
         {{ taskStore.total }} tâche{{ taskStore.total > 1 ? 's' : '' }}
         <span v-if="taskStore.tasks.length < taskStore.total">· {{ taskStore.tasks.length }} affichées</span>
       </p>
 
-      <section v-for="group in groups" :key="group.key" class="space-y-1" :aria-label="group.label">
+      <section
+        v-for="group in groups"
+        :key="group.key"
+        :class="compact ? 'space-y-0.5' : 'space-y-1'"
+        :aria-label="group.label"
+      >
         <div
-          class="flex items-center gap-3 px-4 py-2 sticky top-0 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-xs z-10"
+          :class="[
+            'flex items-center gap-3 px-4 sticky top-0 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-xs z-10',
+            compact ? 'py-1' : 'py-2',
+          ]"
         >
           <span :class="['w-1.5 h-1.5 rounded-full', group.overdue ? 'bg-red-500' : 'bg-indigo-400']"></span>
           <h3
@@ -75,10 +86,12 @@ import { computed } from 'vue'
 import { useTaskStore } from '../stores/taskStore'
 import { groupTasksByDay } from '../utils/grouping'
 import TaskCard from './TaskCard.vue'
+import { useDensity } from '../composables/useDensity'
 
 defineEmits<{ 'open-task': [taskId: string] }>()
 
 const taskStore = useTaskStore()
+const { compact } = useDensity()
 
 const groups = computed(() => groupTasksByDay(taskStore.tasks))
 const hasFilters = computed(() => {

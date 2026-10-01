@@ -9,7 +9,9 @@ describe('dayLabel', () => {
     expect(dayLabel('2026-09-30', today)).toBe("Aujourd'hui")
     expect(dayLabel('2026-10-01', today)).toBe('Demain')
     expect(dayLabel(null, today)).toBe('Sans échéance')
-    expect(dayLabel('2026-10-03', today)).toMatch(/^Samedi 03 octobre$/)
+    expect(dayLabel('2026-10-03', today)).toBe('Samedi 3 octobre')
+    expect(dayLabel('2026-12-24', today)).toBe('Jeudi 24 décembre')
+    expect(dayLabel('2027-01-04', today)).toBe('Lundi 4 janvier 2027')
   })
 })
 
