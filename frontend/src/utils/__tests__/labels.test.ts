@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatLogValue, fullName, presenceLabel } from '../labels'
+import { formatDate, formatLogValue, fullName, presenceLabel, presenceNote } from '../labels'
 import { makeLog } from '../../test/factories'
 import type { PresenceStatus } from '../../types/api'
 
@@ -31,5 +31,17 @@ describe('labels', () => {
     expect(presenceLabel('LEAVING_SOON')).toBe('Bientôt absent')
     expect(presenceLabel('???' as PresenceStatus)).toBe('Inconnu')
     expect(presenceLabel(null)).toBe('Inconnu')
+  })
+
+  it('explique la présence d’un client sur ses tâches', () => {
+    const today = new Date('2026-10-01T10:00:00')
+    const note = (presence_status: PresenceStatus, start: string | null, end: string | null) =>
+      presenceNote({ presence_status, absence_start_date: start, absence_end_date: end }, today)
+    expect(note('PRESENT', null, null)).toBeNull()
+    expect(note('ABSENT', '2026-09-20', '2026-10-10')).toBe("Absent jusqu'au sam. 10 oct.")
+    expect(note('ABSENT', '2026-09-20', null)).toBe('Absent, retour non daté')
+    expect(note('LEAVING_SOON', '2026-10-03', '2026-10-20')).toBe('Part le sam. 3 oct.')
+    expect(note('SOON_BACK', null, '2026-10-02')).toBe('De retour le sam. 3 oct.')
+    expect(note('RECENTLY_BACK', null, '2026-09-28')).toBe('Rentré le mar. 29 sept.')
   })
 })

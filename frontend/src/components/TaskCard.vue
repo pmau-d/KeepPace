@@ -4,16 +4,19 @@
     tabindex="0"
     :aria-label="`Ouvrir la tâche ${task.title}`"
     :class="[
-      'group grid grid-cols-1 md:grid-cols-[16px_1fr_240px_110px_120px] gap-3 items-center px-4 py-3 rounded-lg border border-slate-100 dark:border-slate-700/60 bg-white dark:bg-slate-800 cursor-pointer hover:shadow-xs hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-all duration-150 select-none relative',
-      (isAbsent || isDone) && 'opacity-60',
+      'group grid grid-cols-[16px_minmax(0,1fr)_auto] md:grid-cols-[16px_minmax(0,1fr)_minmax(200px,300px)_110px_140px] gap-x-3 gap-y-1 items-center rounded-lg border border-slate-100 dark:border-slate-700/60 bg-white dark:bg-slate-800 cursor-pointer hover:shadow-xs hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-all duration-150 select-none relative',
+      compact ? 'px-3 py-1.5' : 'px-4 py-3',
+      isDone && 'opacity-60',
+      !isDone && isUnreachable && 'opacity-80',
     ]"
     @click="$emit('open')"
     @keydown.enter.prevent="$emit('open')"
     @keydown.space.prevent="$emit('open')"
   >
-    <PriorityFlag :priority="task.priority" class="mx-auto" />
+    <!-- Mobile : drapeau, titre, statut, puis le client en dessous. Bureau : une colonne chacun. -->
+    <PriorityFlag :priority="task.priority" class="mx-auto col-start-1 row-start-1" />
 
-    <div class="min-w-0">
+    <div class="min-w-0 col-start-2 row-start-1">
       <div class="flex items-center gap-2 flex-wrap">
         <span
           :class="[
@@ -37,21 +40,42 @@
           <MessageSquare class="w-3 h-3" aria-hidden="true" /> {{ task.comments_count }}
         </span>
       </div>
-      <p v-if="task.description" class="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+      <p
+        v-if="task.description && !compact"
+        class="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5"
+      >
         {{ task.description }}
       </p>
     </div>
 
-    <div class="flex items-center gap-1.5 min-w-0" :title="presenceLabel(task.client.presence_status)">
-      <span :class="['w-2 h-2 rounded-full shrink-0', presenceColor(task.client.presence_status)]"></span>
-      <span class="text-xs text-slate-500 dark:text-slate-400 truncate">
-        {{ fullName(task.client) }}
-        <span class="text-slate-300 dark:text-slate-600 mx-0.5">·</span>
-        {{ task.client.company.name }}
-      </span>
+    <div
+      class="col-start-2 row-start-2 md:col-start-3 md:row-start-1 min-w-0"
+      :title="note ?? presenceLabel(task.client.presence_status)"
+    >
+      <div class="flex items-center gap-1.5 min-w-0">
+        <span :class="['w-2 h-2 rounded-full shrink-0', presenceColor(task.client.presence_status)]"></span>
+        <span class="text-xs text-slate-500 dark:text-slate-400 truncate">
+          {{ fullName(task.client) }}
+          <span class="text-slate-300 dark:text-slate-600 mx-0.5">·</span>
+          {{ task.client.company.name }}
+        </span>
+      </div>
+      <!-- Pourquoi la ligne est atténuée : le client n'est pas joignable en ce moment -->
+      <p
+        v-if="note"
+        :class="[
+          'text-[11px] mt-0.5 ml-3.5 truncate',
+          isUnreachable ? 'text-red-600 dark:text-red-400' : 'text-slate-400 dark:text-slate-500',
+        ]"
+      >
+        {{ note }}
+      </p>
     </div>
 
-    <div>
+    <!-- Sur mobile, la date n'est utile que pour les retards (groupe qui mélange plusieurs jours) -->
+    <div
+      :class="['md:block md:col-start-4 md:row-start-1', isOverdue ? 'col-start-2 row-start-3' : 'hidden']"
+    >
       <span
         v-if="task.due_date"
         :class="[
@@ -60,12 +84,14 @@
         ]"
       >
         <Calendar class="w-3 h-3 shrink-0" aria-hidden="true" />
-        {{ formatDate(task.due_date) }}
+        {{ dueLabel }}
       </span>
       <span v-else class="text-xs text-slate-300 dark:text-slate-600">—</span>
     </div>
 
-    <div class="flex items-center gap-1.5">
+    <div
+      class="flex items-center justify-end md:justify-start gap-1.5 col-start-3 row-start-1 md:col-start-5"
+    >
       <button
         v-if="isDone"
         :disabled="reopening"
@@ -85,7 +111,9 @@ import { computed, ref } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import PriorityFlag from './PriorityFlag.vue'
 import { useTaskStore } from '../stores/taskStore'
-import { formatDate, fullName, presenceColor, presenceLabel } from '../utils/labels'
+import { useDensity } from '../composables/useDensity'
+import { formatCompactDate, parseIsoDate, startOfDay } from '../utils/dates'
+import { fullName, presenceColor, presenceLabel, presenceNote } from '../utils/labels'
 import type { TaskSummary } from '../types/api'
 
 const props = defineProps<{ task: TaskSummary }>()
@@ -95,12 +123,16 @@ const taskStore = useTaskStore()
 const reopening = ref(false)
 
 const isDone = computed(() => props.task.status === 'DONE')
-const isAbsent = computed(() => props.task.client.presence_status === 'ABSENT')
+const { compact } = useDensity()
+const note = computed(() => presenceNote(props.task.client))
+const isUnreachable = computed(() => props.task.client.presence_status === 'ABSENT')
+const dueLabel = computed(() => {
+  const due = parseIsoDate(props.task.due_date)
+  return due ? formatCompactDate(due) : ''
+})
 const isOverdue = computed(() => {
-  if (!props.task.due_date || isDone.value) return false
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return new Date(`${props.task.due_date}T00:00:00`) < today
+  const due = parseIsoDate(props.task.due_date)
+  return !isDone.value && due !== null && due < startOfDay(new Date())
 })
 
 async function handleReopen() {

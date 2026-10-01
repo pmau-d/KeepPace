@@ -13,7 +13,8 @@
         id="task-search"
         v-model="searchQuery"
         type="search"
-        placeholder="Rechercher (titre, description, commentaires)…"
+        placeholder="Rechercher une tâche…"
+        title="Recherche dans les titres, descriptions et commentaires"
         class="w-full pl-9 pr-3 py-2 text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg focus:ring-2 focus:ring-indigo-500 placeholder-slate-400 transition"
         @input="handleSearch"
       />
@@ -57,6 +58,17 @@
       <label for="show-done" class="cursor-pointer">Terminées</label>
     </div>
 
+    <button
+      type="button"
+      :aria-pressed="compact"
+      :title="compact ? 'Affichage confortable' : 'Affichage compact'"
+      :aria-label="compact ? 'Passer en affichage confortable' : 'Passer en affichage compact'"
+      class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+      @click="toggleDensity"
+    >
+      <component :is="compact ? Rows2 : Rows3" class="w-4 h-4" aria-hidden="true" />
+    </button>
+
     <!-- Export CSV des tâches filtrées -->
     <a
       :href="exportUrl"
@@ -79,17 +91,19 @@
 </template>
 
 <script setup lang="ts">
-import { Download, Plus, Search } from '@lucide/vue'
+import { Download, Plus, Rows2, Rows3, Search } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { tasksApi } from '../api/index'
 import { useTaskStore } from '../stores/taskStore'
 import BaseSelect from './ui/BaseSelect.vue'
+import { useDensity } from '../composables/useDensity'
 import { PRESENCE_OPTIONS, STATUS_OPTIONS } from '../utils/options'
 import type { PresenceStatus, TaskStatus } from '../types/api'
 
 defineEmits<{ 'open-create': [] }>()
 
 const taskStore = useTaskStore()
+const { compact, toggle: toggleDensity } = useDensity()
 
 const searchQuery = ref(taskStore.filters.search)
 const statusFilter = ref<TaskStatus | ''>(taskStore.filters.status || '')

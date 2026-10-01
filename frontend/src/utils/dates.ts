@@ -83,3 +83,13 @@ export function formatShortDate(date: Date): string {
 export function formatMonth(date: Date): string {
   return capitalize(date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }))
 }
+
+/** « mar. 29 sept. », avec l'année seulement si elle diffère de l'année en cours. */
+export function formatCompactDate(date: Date, today: Date = new Date()): string {
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    ...(date.getFullYear() !== today.getFullYear() && { year: 'numeric' }),
+  })
+}
