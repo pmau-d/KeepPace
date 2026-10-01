@@ -140,15 +140,7 @@
                 class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >Priorité</label
               >
-              <select
-                id="new-task-field-4"
-                v-model="form.priority"
-                class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="LOW">Basse</option>
-                <option value="MEDIUM">Moyenne</option>
-                <option value="HIGH">Haute</option>
-              </select>
+              <BaseSelect id="new-task-field-4" v-model="form.priority" :options="PRIORITY_OPTIONS" block />
             </div>
             <div>
               <label
@@ -156,15 +148,12 @@
                 class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >Statut</label
               >
-              <select
+              <BaseSelect
                 id="new-task-field-5"
                 v-model="form.status"
-                class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="TODO">À faire</option>
-                <option value="IN_PROGRESS">En cours</option>
-                <option value="BLOCKED">En attente</option>
-              </select>
+                :options="STATUS_OPTIONS.filter((o) => o.value !== 'DONE')"
+                block
+              />
             </div>
           </div>
 
@@ -176,12 +165,7 @@
             >
               Date d'échéance
             </label>
-            <input
-              id="new-task-field-6"
-              v-model="form.due_date"
-              type="date"
-              class="w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-            />
+            <DatePicker id="new-task-field-6" v-model="form.due_date" placeholder="Sans échéance" />
           </div>
 
           <!-- Error -->
@@ -219,6 +203,9 @@ import { useTaskStore } from '../stores/taskStore'
 import { useToastStore } from '../stores/toast'
 import { errorMessage } from '../api/index'
 import CreateClientModal from './CreateClientModal.vue'
+import BaseSelect from './ui/BaseSelect.vue'
+import DatePicker from './ui/DatePicker.vue'
+import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '../utils/options'
 import type { Client, TaskCreatePayload, TaskPriority, TaskStatus, TaskSummary } from '../types/api'
 
 const props = withDefaults(defineProps<{ prefill?: TaskSummary | null }>(), { prefill: null })

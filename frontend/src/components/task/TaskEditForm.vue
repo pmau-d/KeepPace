@@ -8,15 +8,11 @@
     <div class="grid grid-cols-2 gap-3">
       <div>
         <label for="task-status" :class="labelClass">Statut</label>
-        <select id="task-status" v-model="form.status" :class="inputClass">
-          <option v-for="(label, value) in STATUS_LABELS" :key="value" :value="value">{{ label }}</option>
-        </select>
+        <BaseSelect id="task-status" v-model="form.status" :options="STATUS_OPTIONS" block />
       </div>
       <div>
         <label for="task-priority" :class="labelClass">Priorité</label>
-        <select id="task-priority" v-model="form.priority" :class="inputClass">
-          <option v-for="(label, value) in PRIORITY_LABELS" :key="value" :value="value">{{ label }}</option>
-        </select>
+        <BaseSelect id="task-priority" v-model="form.priority" :options="PRIORITY_OPTIONS" block />
       </div>
     </div>
 
@@ -58,7 +54,7 @@
 
     <div>
       <label for="task-due" :class="labelClass">Date d'échéance</label>
-      <input id="task-due" v-model="form.due_date" type="date" :class="inputClass" />
+      <DatePicker id="task-due" v-model="form.due_date" placeholder="Sans échéance" />
     </div>
 
     <div>
@@ -139,7 +135,9 @@ import { computed, reactive, ref, watch } from 'vue'
 import { confirm } from '../../composables/useConfirm'
 import { useTaskStore } from '../../stores/taskStore'
 import { useToastStore } from '../../stores/toast'
-import { PRIORITY_LABELS, STATUS_LABELS } from '../../utils/labels'
+import BaseSelect from '../ui/BaseSelect.vue'
+import DatePicker from '../ui/DatePicker.vue'
+import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '../../utils/options'
 import type { Task, TaskPriority, TaskStatus, TaskSummary, TaskUpdatePayload } from '../../types/api'
 
 const props = defineProps<{ task: Task }>()

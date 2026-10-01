@@ -8,26 +8,24 @@
         <label :for="`${idPrefix}-start`" class="block text-xs text-slate-500 dark:text-slate-400 mb-1"
           >Du</label
         >
-        <input
+        <DatePicker
           :id="`${idPrefix}-start`"
-          :value="start"
-          type="date"
+          :model-value="start"
           :max="end || undefined"
-          :class="inputClass"
-          @input="$emit('update:start', ($event.target as HTMLInputElement).value)"
+          placeholder="Déjà commencée"
+          @update:model-value="$emit('update:start', $event)"
         />
       </div>
       <div>
         <label :for="`${idPrefix}-end`" class="block text-xs text-slate-500 dark:text-slate-400 mb-1"
           >Au</label
         >
-        <input
+        <DatePicker
           :id="`${idPrefix}-end`"
-          :value="end"
-          type="date"
+          :model-value="end"
           :min="start || undefined"
-          :class="inputClass"
-          @input="$emit('update:end', ($event.target as HTMLInputElement).value)"
+          placeholder="Retour non daté"
+          @update:model-value="$emit('update:end', $event)"
         />
       </div>
     </div>
@@ -46,15 +44,13 @@
 </template>
 
 <script setup lang="ts">
+import DatePicker from './ui/DatePicker.vue'
 withDefaults(defineProps<{ start?: string; end?: string; idPrefix?: string }>(), {
   start: '',
   end: '',
   idPrefix: 'absence',
 })
 const emit = defineEmits<{ 'update:start': [value: string]; 'update:end': [value: string] }>()
-
-const inputClass =
-  'w-full text-sm bg-slate-100 dark:bg-slate-700 dark:text-slate-100 border-0 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500'
 
 function clear() {
   emit('update:start', '')
