@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatLogValue, fullName, presenceLabel, presenceNote } from '../labels'
+import { formatDate, formatLogValue, fullName, presenceLabel, presenceNote, recurrenceLabel } from '../labels'
 import { makeLog } from '../../test/factories'
 import type { PresenceStatus } from '../../types/api'
 
@@ -43,5 +43,15 @@ describe('labels', () => {
     expect(note('LEAVING_SOON', '2026-10-03', '2026-10-20')).toBe('Part le sam. 3 oct.')
     expect(note('SOON_BACK', null, '2026-10-02')).toBe('De retour le sam. 3 oct.')
     expect(note('RECENTLY_BACK', null, '2026-09-28')).toBe('Rentré le mar. 29 sept.')
+  })
+
+  it('décrit la récurrence', () => {
+    expect(recurrenceLabel(null)).toBeNull()
+    expect(recurrenceLabel('WEEKLY')).toBe('Chaque semaine')
+    expect(recurrenceLabel('MONTHLY', 3)).toBe('Tous les 3 mois')
+    expect(recurrenceLabel('WEEKLY', 2)).toBe('Toutes les 2 semaines')
+    expect(
+      formatLogValue(makeLog({ field_changed: 'next_occurrence', new_value: '2026-10-08' }), 'new'),
+    ).toBe('08/10/2026')
   })
 })

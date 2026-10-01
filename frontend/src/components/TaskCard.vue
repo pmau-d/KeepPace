@@ -33,6 +33,14 @@
           {{ task.sub_status }}
         </span>
         <span
+          v-if="recurrence"
+          class="text-[10px] text-indigo-500 dark:text-indigo-400 flex items-center gap-0.5"
+          :title="recurrence"
+          :aria-label="`Tâche récurrente : ${recurrence.toLowerCase()}`"
+        >
+          <Repeat class="w-3 h-3" aria-hidden="true" />
+        </span>
+        <span
           v-if="task.comments_count"
           class="text-[10px] text-slate-400 flex items-center gap-0.5"
           :title="`${task.comments_count} commentaire(s)`"
@@ -106,14 +114,14 @@
 </template>
 
 <script setup lang="ts">
-import { Calendar, MessageSquare } from '@lucide/vue'
+import { Calendar, MessageSquare, Repeat } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import PriorityFlag from './PriorityFlag.vue'
 import { useTaskStore } from '../stores/taskStore'
 import { useDensity } from '../composables/useDensity'
 import { formatCompactDate, parseIsoDate, startOfDay } from '../utils/dates'
-import { fullName, presenceColor, presenceLabel, presenceNote } from '../utils/labels'
+import { fullName, presenceColor, presenceLabel, presenceNote, recurrenceLabel } from '../utils/labels'
 import type { TaskSummary } from '../types/api'
 
 const props = defineProps<{ task: TaskSummary }>()
@@ -125,6 +133,7 @@ const reopening = ref(false)
 const isDone = computed(() => props.task.status === 'DONE')
 const { compact } = useDensity()
 const note = computed(() => presenceNote(props.task.client))
+const recurrence = computed(() => recurrenceLabel(props.task.recurrence, props.task.recurrence_interval))
 const isUnreachable = computed(() => props.task.client.presence_status === 'ABSENT')
 const dueLabel = computed(() => {
   const due = parseIsoDate(props.task.due_date)

@@ -13,12 +13,23 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.enums import FollowUpReason, PresenceStatus, TaskPriority, TaskStatus
 from app.presence import enrich_task, enrich_tasks, presence_status_expr, today
+from app.recurrence import describe, next_occurrence
 from app.repository import get_client, get_task, owned
 from app.types import utcnow
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
-TRACKED_FIELDS = ["status", "sub_status", "due_date", "description", "priority", "title", "client_id"]
+TRACKED_FIELDS = [
+    "status",
+    "sub_status",
+    "due_date",
+    "description",
+    "priority",
+    "title",
+    "client_id",
+    "recurrence",
+    "recurrence_interval",
+]
 
 # Ordre de priorité pour le tri : HIGH < MEDIUM < LOW (HIGH en premier)
 PRIORITY_ORDER = case(
@@ -96,6 +107,40 @@ def _ordered(query):
         models.Task.created_at.desc(),
         models.Task.id,
     )
+
+
+def _spawn_next_occurrence(db: Session, task: models.Task) -> models.Task | None:
+    """Une tâche récurrente qui vient d'être terminée crée l'occurrence suivante.
+
+    Une seule fois : réouvrir puis refermer la même tâche ne la duplique pas.
+    """
+    if task.recurrence is None or task.archived_at is not None:
+        return None
+    already = (
+        select(models.TaskLog.id)
+        .where(models.TaskLog.task_id == task.id, models.TaskLog.field_changed == "next_occurrence")
+        .exists()
+    )
+    if db.query(already).scalar():
+        return None
+    due = next_occurrence(task.due_date, task.recurrence, task.recurrence_interval, today())
+    follow = models.Task(
+        owner_id=task.owner_id,
+        client_id=task.client_id,
+        title=task.title,
+        description=task.description,
+        priority=task.priority,
+        status=TaskStatus.TODO,
+        due_date=due,
+        recurrence=task.recurrence,
+        recurrence_interval=task.recurrence_interval,
+    )
+    db.add(follow)
+    db.flush()
+    rhythm = describe(task.recurrence, task.recurrence_interval)
+    db.add(_log(follow, "status", None, TaskStatus.TODO, f"Tâche créée (récurrence : {rhythm})"))
+    db.add(_log(task, "next_occurrence", None, due.isoformat(), "Occurrence suivante créée"))
+    return follow
 
 
 @router.get("/", response_model=schemas.TaskPage)
@@ -220,8 +265,11 @@ def update_task(
                 labels = {"old_label": task.client.display_name, "new_label": new_client.display_name}
             db.add(_log(task, field, old_val, new_val, comment, **labels))
 
+    completed = update_data.get("status") == TaskStatus.DONE and task.status != TaskStatus.DONE
     for field, value in update_data.items():
         setattr(task, field, value)
+    if completed:
+        _spawn_next_occurrence(db, task)
     db.commit()
     db.refresh(task)
     return enrich_task(db, task)
@@ -234,6 +282,7 @@ def close_task(task_id: str, db: Session = Depends(get_db), user: models.User = 
     if task.status != TaskStatus.DONE:
         db.add(_log(task, "status", task.status, TaskStatus.DONE, "Tâche fermée"))
         task.status = TaskStatus.DONE
+        _spawn_next_occurrence(db, task)
         db.commit()
         db.refresh(task)
     return enrich_task(db, task)

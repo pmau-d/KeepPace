@@ -32,3 +32,12 @@ class FollowUpReason(StrEnum):
     CLIENT_LEAVING = "CLIENT_LEAVING"  # le client part bientôt : le joindre avant
     CLIENT_BACK = "CLIENT_BACK"  # le client vient de rentrer
     WAITING = "WAITING"  # en attente client sans nouvelle depuis plusieurs jours
+
+
+class Recurrence(StrEnum):
+    """Fréquence d'une tâche récurrente : terminer une occurrence crée la suivante."""
+
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
+    YEARLY = "YEARLY"
