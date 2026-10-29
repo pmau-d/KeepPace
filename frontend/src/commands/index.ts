@@ -5,6 +5,7 @@ import {
   Archive,
   CalendarRange,
   Download,
+  House,
   Keyboard,
   ListTodo,
   Megaphone,
@@ -44,6 +45,14 @@ interface Context {
 export function buildCommands({ router, toggleDark, toggleDensity, exportUrl }: Context): Command[] {
   const go = (name: string, query?: Record<string, string>) => () => void router.push({ name, query })
   return [
+    {
+      id: 'home',
+      label: 'Accueil',
+      group: 'Aller à',
+      icon: House,
+      hint: ['g', 'h'],
+      run: go('home'),
+    },
     {
       id: 'tasks',
       label: 'Toutes les tâches',

@@ -93,8 +93,8 @@ historique qui n'est jamais effacé.
 **Travailler vite**
 
 - **Palette de commandes** (Ctrl/⌘ K) : commandes, tâches et clients.
-- **Raccourcis clavier** : `n` nouvelle tâche, `/` rechercher, `g` puis `t`,
-  `b`, `r`, `p` ou `a` pour changer de vue, `?` pour l'aide.
+- **Raccourcis clavier** : `n` nouvelle tâche, `/` rechercher, `g` puis `h`,
+  `t`, `b`, `r`, `p` ou `a` pour changer de vue, `?` pour l'aide.
 - **Recherche plein texte** dans les titres, descriptions et commentaires ;
   filtres par statut, présence et client ; liste paginée.
 - **Export CSV** des tâches filtrées, prêt pour Excel (séparateur `;`, UTF-8).

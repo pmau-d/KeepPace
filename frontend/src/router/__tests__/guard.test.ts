@@ -28,7 +28,7 @@ describe('garde de navigation', () => {
     await router.push('/relances')
     expect(router.currentRoute.value.name).toBe('follow-up')
     await router.push('/login')
-    expect(router.currentRoute.value.name).toBe('tasks')
+    expect(router.currentRoute.value.name).toBe('home')
   })
 
   it("laisse un visiteur non connecté voir la vitrine, mais rien d'autre", async () => {
