@@ -30,4 +30,17 @@ describe('garde de navigation', () => {
     await router.push('/login')
     expect(router.currentRoute.value.name).toBe('tasks')
   })
+
+  it("laisse un visiteur non connecté voir la vitrine, mais rien d'autre", async () => {
+    vi.mocked(authApi.me).mockRejectedValue(new Error('401'))
+    const router = createAppRouter(createMemoryHistory())
+    await router.push('/projets')
+    expect(router.currentRoute.value.name).toBe('public-projects')
+    await router.push('/projets/mon-projet')
+    expect(router.currentRoute.value.name).toBe('public-project')
+    expect(router.currentRoute.value.params.slug).toBe('mon-projet')
+    // Les projets privés sont ailleurs, derrière la connexion
+    await router.push('/mes-projets')
+    expect(router.currentRoute.value.name).toBe('login')
+  })
 })

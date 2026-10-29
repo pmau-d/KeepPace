@@ -13,6 +13,21 @@ def slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", ascii_name.lower()).strip("-") or "projet"
 
 
+def public_address_taken(db: Session, project: models.Project) -> bool:
+    """Un autre projet public (actif) a déjà cette adresse : /projets/<slug> doit rester sans ambiguïté."""
+    return (
+        db.query(models.Project.id)
+        .filter(
+            models.Project.slug == project.slug,
+            models.Project.id != project.id,
+            models.Project.is_public.is_(True),
+            models.Project.archived_at.is_(None),
+        )
+        .first()
+        is not None
+    )
+
+
 def unique_slug(db: Session, owner_id: str, name: str) -> str:
     """Le slug du nom, suffixé -2, -3… s'il existe déjà (même pour un projet archivé)."""
     base = slugify(name)
