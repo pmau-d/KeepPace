@@ -62,6 +62,9 @@ historique qui n'est jamais effacé.
 - **Projets de développement** : une page par projet (avancement, état) avec
   des tâches typées (tâche, bug, amélioration), filtrables par onglet, et
   récurrentes si besoin (ex. toutes les 2 semaines). Indépendants des clients.
+- **Vitrine publique** : un projet peut être publié sur `/projets` (nom,
+  description, état, avancement, tâches terminées), visible sans connexion.
+  Tout le reste, clients compris, reste privé.
 - **Tableau** (Kanban) par statut, au glisser-déposer ou au clavier.
 - **Historique complet** : chaque changement est journalisé avec des libellés
   lisibles ; supprimer archive (réversible, avec « Annuler ») au lieu d'effacer.

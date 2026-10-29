@@ -10,6 +10,8 @@ import type {
   ProjectTask,
   ProjectTaskCreatePayload,
   ProjectTaskUpdatePayload,
+  PublicProject,
+  PublicProjectCard,
   TaskKind,
   RegisterPayload,
   Task,
@@ -121,6 +123,12 @@ export const projectsApi = {
   update: (id: string, data: ProjectPayload) => api.put<Project>(`/projects/${id}`, data),
   archive: (id: string) => api.delete<void>(`/projects/${id}`),
   restore: (id: string) => api.post<Project>(`/projects/${id}/restore`),
+}
+
+/** Vitrine : appelée sans connexion. */
+export const publicApi = {
+  list: () => api.get<PublicProjectCard[]>('/public/projects/'),
+  get: (slug: string) => api.get<PublicProject>(`/public/projects/${encodeURIComponent(slug)}`),
 }
 
 export const projectTasksApi = {

@@ -46,6 +46,39 @@
               </button>
             </div>
           </div>
+          <div class="mt-4 flex items-center gap-3 flex-wrap text-sm text-slate-600 dark:text-slate-300">
+            <button
+              id="project-public"
+              type="button"
+              role="switch"
+              :aria-checked="project.is_public"
+              :disabled="publishing"
+              :class="[
+                'relative w-10 h-5 rounded-full transition-colors shrink-0 disabled:opacity-50',
+                project.is_public ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600',
+              ]"
+              @click="togglePublic"
+            >
+              <span
+                :class="[
+                  'absolute left-0 top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200',
+                  project.is_public ? 'translate-x-5' : 'translate-x-0.5',
+                ]"
+              ></span>
+            </button>
+            <label for="project-public" class="cursor-pointer">Visible publiquement</label>
+            <RouterLink
+              v-if="project.is_public"
+              :to="{ name: 'public-project', params: { slug: project.slug } }"
+              class="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
+              <ExternalLink class="w-3.5 h-3.5" aria-hidden="true" />
+              Voir la vitrine
+            </RouterLink>
+            <span v-else class="text-xs text-slate-400">
+              Privé : seuls vous le voyez. Public : nom, description, état, avancement et tâches terminées.
+            </span>
+          </div>
           <ProjectProgress
             class="mt-4"
             :progress="project.progress"
@@ -191,7 +224,7 @@
 </template>
 
 <script setup lang="ts">
-import { Archive, ArrowLeft, ChevronRight } from '@lucide/vue'
+import { Archive, ArrowLeft, ChevronRight, ExternalLink } from '@lucide/vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { errorMessage, httpStatus, projectTasksApi, projectsApi } from '../api/index'
@@ -232,6 +265,7 @@ const activeTab = ref<Tab>('ALL')
 const showDone = ref(false)
 const showOptions = ref(false)
 const adding = ref(false)
+const publishing = ref(false)
 
 const STATUS_OPTIONS = (Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]).map((value) => ({
   value,
@@ -365,6 +399,18 @@ async function changeStatus(status: ProjectStatus) {
     project.value = await projectStore.updateProject(props.id, { status })
   } catch (e) {
     toast.error(e, 'Impossible de modifier le projet.')
+  }
+}
+
+async function togglePublic() {
+  if (!project.value) return
+  publishing.value = true
+  try {
+    project.value = await projectStore.updateProject(props.id, { is_public: !project.value.is_public })
+  } catch (e) {
+    toast.error(e, 'Impossible de modifier la visibilité du projet.')
+  } finally {
+    publishing.value = false
   }
 }
 

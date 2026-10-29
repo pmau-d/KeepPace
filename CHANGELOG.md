@@ -17,6 +17,11 @@ projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 
+- **Vitrine publique des projets** : chaque projet peut être rendu public d'un
+  clic. Un visiteur sans compte voit alors, sur `/projets` et `/projets/<adresse>`,
+  son nom, sa description, son état, son avancement en pourcentage et ses tâches
+  terminées. Rien d'autre : ni clients, ni tâches en cours, ni bugs, ni retours,
+  même traités. Vos pages privées sont désormais sous `/mes-projets`.
 - **Projets de développement**, séparés des clients : une page par projet avec
   avancement, état (idée, en cours, en pause, livré) et tâches typées (tâche,
   bug, amélioration) pour saisir les retours d'une présentation. Les tâches de

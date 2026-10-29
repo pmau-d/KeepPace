@@ -82,6 +82,7 @@ export function makeProject(overrides: Partial<Project> = {}): Project {
     slug: 'site-vitrine',
     description: null,
     status: 'ACTIVE',
+    is_public: false,
     created_at: '2026-09-01T09:00:00Z',
     archived_at: null,
     tasks_total: 0,

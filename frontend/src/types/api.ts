@@ -175,6 +175,8 @@ export interface Project {
   slug: string
   description: string | null
   status: ProjectStatus
+  /** Visible sans connexion sur /projets/<slug>. */
+  is_public: boolean
   created_at: IsoDateTime
   archived_at: IsoDateTime | null
   tasks_total: number
@@ -187,6 +189,20 @@ export interface ProjectPayload {
   name?: string
   description?: string | null
   status?: ProjectStatus
+  is_public?: boolean
+}
+
+/** Vitrine publique : ce que voit un visiteur non connecté, rien de plus. */
+export interface PublicProjectCard {
+  name: string
+  slug: string
+  description: string | null
+  status: ProjectStatus
+  progress: number
+}
+
+export interface PublicProject extends PublicProjectCard {
+  completed_tasks: { title: string; completed_at: IsoDateTime }[]
 }
 
 export interface ProjectTask {
