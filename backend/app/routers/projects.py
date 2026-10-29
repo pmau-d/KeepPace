@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.archive import archive_project, restore_project
 from app.database import get_db
 from app.deps import get_current_user
-from app.projects import unique_slug
+from app.projects import public_address_taken, unique_slug
 from app.repository import get_project, owned
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -48,6 +48,11 @@ def update_project(
     for field, value in data.model_dump(exclude_unset=True).items():
         if value is not None or field == "description":
             setattr(project, field, value)
+    if project.is_public and public_address_taken(db, project):
+        db.rollback()
+        raise HTTPException(
+            status_code=409, detail=f"Un autre projet public utilise déjà l'adresse « {project.slug} »"
+        )
     db.commit()
     db.refresh(project)
     return project
@@ -66,6 +71,9 @@ def delete_project(
 def restore(project_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     project = get_project(db, project_id, user, archived=True)
     restore_project(db, project)
+    # L'adresse a pu être prise pendant l'archivage : le projet revient en privé.
+    if project.is_public and public_address_taken(db, project):
+        project.is_public = False
     db.commit()
     db.refresh(project)
     return project

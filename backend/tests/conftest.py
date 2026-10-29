@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from app.database import Base, engine
 from app.main import app
-from app.security import login_limiter
+from app.security import login_limiter, public_limiter
 
 PASSWORD = "correct-horse-battery"
 
@@ -26,6 +26,7 @@ def anon():
     """Client HTTP non connecté, sur une base vide."""
     Base.metadata.create_all(bind=engine)
     login_limiter.reset()
+    public_limiter.reset()
     with TestClient(app) as test_client:
         yield test_client
     Base.metadata.drop_all(bind=engine)

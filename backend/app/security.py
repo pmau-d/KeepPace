@@ -86,4 +86,7 @@ class LoginRateLimiter:
                 self._failures.pop(key, None)
 
 
+# Filet de sécurité des routes publiques : par adresse IP (celle de nginx derrière
+# le proxy, donc un plafond global), sans compter d'échecs.
+public_limiter = LoginRateLimiter(300, 60)
 login_limiter = LoginRateLimiter(settings.LOGIN_MAX_ATTEMPTS, settings.LOGIN_LOCKOUT_MINUTES * 60)

@@ -236,6 +236,7 @@ class ProjectUpdate(BaseModel):
     name: Name | None = None
     description: str | None = None
     status: ProjectStatus | None = None
+    is_public: bool | None = None
 
 
 class ProjectRead(BaseModel):
@@ -244,6 +245,7 @@ class ProjectRead(BaseModel):
     slug: str
     description: str | None = None
     status: ProjectStatus
+    is_public: bool = False
     created_at: datetime
     archived_at: datetime | None = None
     tasks_total: int = 0
@@ -251,6 +253,32 @@ class ProjectRead(BaseModel):
     progress: int = 0
 
     model_config = {"from_attributes": True}
+
+
+# Vitrine publique : schémas dédiés, volontairement séparés des schémas privés.
+# Un champ ajouté ici devient visible de tout internet : ne jamais hériter de
+# ProjectRead, ni exposer d'identifiant, de compte, de bug ou de tâche en cours.
+
+
+class PublicProjectCard(BaseModel):
+    name: str
+    slug: str
+    description: str | None = None
+    status: ProjectStatus
+    progress: int = 0
+
+    model_config = {"from_attributes": True}
+
+
+class PublicCompletedTask(BaseModel):
+    title: str
+    completed_at: datetime = Field(validation_alias="updated_at")
+
+    model_config = {"from_attributes": True}
+
+
+class PublicProject(PublicProjectCard):
+    completed_tasks: list[PublicCompletedTask] = []
 
 
 class ProjectTaskCreate(BaseModel):
