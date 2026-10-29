@@ -65,7 +65,7 @@ def build_digest(db: Session, user: models.User) -> schemas.Digest:
             entry(c, c.absence_end_date + timedelta(days=1))
             for c in returning.order_by(models.Client.absence_end_date)
         ],
-        email_available=settings.email_enabled,
+        email_available=settings.email_enabled and bool(user.email),
     )
 
 
@@ -151,7 +151,11 @@ def send_digest(db: Session, user: models.User) -> bool:
 
 
 def send_all_digests(db: Session) -> int:
-    users = db.query(models.User).filter(and_(models.User.is_active, models.User.digest_opt_in)).all()
+    users = (
+        db.query(models.User)
+        .filter(and_(models.User.is_active, models.User.digest_opt_in, models.User.email.is_not(None)))
+        .all()
+    )
     sent = 0
     for user in users:
         try:

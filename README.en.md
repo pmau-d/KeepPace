@@ -125,7 +125,7 @@ Create an account from the login screen, or load fictitious demo data:
 
 ```bash
 docker compose exec backend python -m scripts.seed_demo
-# → account demo@example.com, password printed by the command
+# → account demo, password printed by the command
 ```
 
 ## Architecture

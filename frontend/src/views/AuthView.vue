@@ -2,11 +2,7 @@
   <div class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 p-4">
     <div class="w-full max-w-sm">
       <div class="flex items-center gap-3 justify-center mb-8">
-        <div
-          class="w-11 h-11 bg-linear-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-sm"
-        >
-          <span class="text-white font-bold">KP</span>
-        </div>
+        <AppLogo size="lg" />
         <div>
           <p class="font-bold text-xl text-slate-800 dark:text-white leading-none">KeepPace</p>
           <p class="text-xs text-slate-400 mt-1">Suivi des tâches et des relances clients</p>
@@ -30,18 +26,26 @@
         </div>
 
         <div>
-          <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-            >Email</label
+          <label for="username" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >Pseudo</label
           >
           <input
-            id="email"
-            v-model="form.email"
-            type="email"
+            id="username"
+            v-model="form.username"
+            type="text"
             required
-            autocomplete="email"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
             autofocus
+            :minlength="isRegister ? 3 : undefined"
+            :maxlength="isRegister ? 32 : undefined"
+            :pattern="isRegister ? '[A-Za-z0-9._-]+' : undefined"
             :class="inputClass"
           />
+          <p v-if="isRegister" class="text-xs text-slate-400 mt-1">
+            3 à 32 caractères : lettres, chiffres, point, tiret ou tiret bas.
+          </p>
         </div>
 
         <div>
@@ -99,6 +103,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { errorMessage } from '../api/index'
+import AppLogo from '../components/AppLogo.vue'
 import { useAuthStore } from '../stores/auth'
 
 const props = withDefaults(defineProps<{ mode?: 'login' | 'register' }>(), { mode: 'login' })
@@ -108,7 +113,7 @@ const route = useRoute()
 const router = useRouter()
 
 const isRegister = computed(() => props.mode === 'register')
-const form = reactive({ email: '', password: '', fullName: '' })
+const form = reactive({ username: '', password: '', fullName: '' })
 const error = ref('')
 const submitting = ref(false)
 
@@ -126,17 +131,21 @@ function redirectTarget() {
 }
 
 async function submit() {
-  if (!form.email || !form.password) {
-    error.value = 'Renseignez votre email et votre mot de passe.'
+  if (!form.username || !form.password) {
+    error.value = 'Renseignez votre pseudo et votre mot de passe.'
     return
   }
   submitting.value = true
   error.value = ''
   try {
     if (isRegister.value) {
-      await auth.register({ email: form.email, password: form.password, full_name: form.fullName || null })
+      await auth.register({
+        username: form.username,
+        password: form.password,
+        full_name: form.fullName || null,
+      })
     } else {
-      await auth.login(form.email, form.password)
+      await auth.login(form.username, form.password)
     }
     await router.replace(redirectTarget())
   } catch (e) {

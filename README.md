@@ -129,7 +129,7 @@ démonstration fictives :
 
 ```bash
 docker compose exec backend python -m scripts.seed_demo
-# → compte demo@example.com, mot de passe affiché par la commande
+# → compte demo, mot de passe affiché par la commande
 ```
 
 ## Architecture

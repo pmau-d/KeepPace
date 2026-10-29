@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy import func, update
+from sqlalchemy import func, or_, update
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -43,14 +43,19 @@ def _adopt_legacy_data(db: Session, user: models.User) -> None:
 def register(data: schemas.UserCreate, response: Response, db: Session = Depends(get_db)):
     if not settings.ALLOW_REGISTRATION:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Les inscriptions sont fermées")
-    email = data.email.lower()
-    if db.query(models.User).filter(models.User.email == email).first():
+    username = data.username.lower()
+    email = data.email.lower() if data.email else None
+    if db.query(models.User).filter(models.User.username == username).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ce pseudo est déjà pris")
+    if email and db.query(models.User).filter(models.User.email == email).first():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Un compte existe déjà avec cet email"
         )
 
     is_first_user = db.query(func.count(models.User.id)).scalar() == 0
-    user = models.User(email=email, full_name=data.full_name, password_hash=hash_password(data.password))
+    user = models.User(
+        username=username, email=email, full_name=data.full_name, password_hash=hash_password(data.password)
+    )
     db.add(user)
     db.flush()
     if is_first_user:
@@ -63,20 +68,24 @@ def register(data: schemas.UserCreate, response: Response, db: Session = Depends
 
 @router.post("/login", response_model=schemas.UserRead)
 def login(data: schemas.LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
-    email = data.email.lower()
-    limiter_key = f"{request.client.host if request.client else '?'}:{email}"
+    identifier = data.username.strip().lower()
+    limiter_key = f"{request.client.host if request.client else '?'}:{identifier}"
     if login_limiter.is_blocked(limiter_key):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Trop de tentatives. Réessayez dans quelques minutes.",
         )
 
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = (
+        db.query(models.User)
+        .filter(or_(models.User.username == identifier, models.User.email == identifier))
+        .first()
+    )
     valid = verify_password(user.password_hash if user else _DUMMY_HASH, data.password)
     if not user or not valid or not user.is_active:
         login_limiter.record_failure(limiter_key)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Email ou mot de passe incorrect"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Pseudo ou mot de passe incorrect"
         )
 
     login_limiter.reset(limiter_key)
@@ -101,7 +110,15 @@ def me(user: models.User = Depends(get_current_user)):
 def update_me(
     data: schemas.UserUpdate, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
 ):
-    for field, value in data.model_dump(exclude_unset=True).items():
+    changes = data.model_dump(exclude_unset=True)
+    if changes.get("email"):
+        changes["email"] = changes["email"].lower()
+        taken = db.query(models.User).filter(models.User.email == changes["email"], models.User.id != user.id)
+        if taken.first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Un compte existe déjà avec cet email"
+            )
+    for field, value in changes.items():
         setattr(user, field, value)
     db.commit()
     db.refresh(user)

@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import BaseModel, EmailStr, Field, StringConstraints, model_validator
+from pydantic import AliasChoices, BaseModel, EmailStr, Field, StringConstraints, model_validator
 
 from app.enums import (
     FollowUpReason,
@@ -19,20 +19,28 @@ OptionalName = Annotated[str, StringConstraints(strip_whitespace=True, max_lengt
 # ─── Auth ───────────────────────────────────────────────────────────────────
 
 
+Username = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=3, max_length=32, pattern=r"^[A-Za-z0-9._-]+$")
+]
+
+
 class UserCreate(BaseModel):
-    email: EmailStr
+    username: Username
+    email: EmailStr | None = None
     password: str = Field(min_length=10, max_length=128)
     full_name: OptionalName = None
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    # Le pseudo ; l'email des comptes plus anciens reste accepté (ancien champ « email »).
+    username: str = Field(max_length=320, validation_alias=AliasChoices("username", "email"))
     password: str = Field(max_length=128)
 
 
 class UserRead(BaseModel):
     id: str
-    email: str
+    username: str
+    email: str | None = None
     full_name: str | None = None
     digest_opt_in: bool = False
 
@@ -41,6 +49,7 @@ class UserRead(BaseModel):
 
 class UserUpdate(BaseModel):
     full_name: OptionalName = None
+    email: EmailStr | None = None
     digest_opt_in: bool | None = None
 
 

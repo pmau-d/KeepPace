@@ -38,9 +38,18 @@ def test_send_now_requires_email_configuration(client):
     assert client.post("/digest/send").status_code == 409
 
 
+def test_send_now_needs_an_email_on_the_account(client, monkeypatch):
+    monkeypatch.setattr(settings, "DIGEST_ENABLED", True)
+    monkeypatch.setattr(settings, "SMTP_HOST", "smtp.example.com")
+    response = client.post("/digest/send")
+    assert response.status_code == 409
+    assert "email" in response.json()["detail"]
+
+
 def test_send_now_sends_text_and_html(client, monkeypatch):
     monkeypatch.setattr(settings, "DIGEST_ENABLED", True)
     monkeypatch.setattr(settings, "SMTP_HOST", "smtp.example.com")
+    client.put("/auth/me", json={"email": "alice@example.com"})
     customer = make_client(client, first_name="Camille")
     client.post("/tasks/", json={"client_id": customer["id"], "title": "Devis <urgent>", "due_date": _d(0)})
     with patch("app.routers.digest.send_email") as send:
@@ -61,7 +70,7 @@ def test_daily_sending_only_to_opted_in_accounts_with_news(client, other_client)
 
     customer = make_client(client)
     client.post("/tasks/", json={"client_id": customer["id"], "title": "x", "due_date": _d(-2)})
-    client.put("/auth/me", json={"digest_opt_in": True})
+    client.put("/auth/me", json={"digest_opt_in": True, "email": "alice@example.com"})
     other_client.put("/auth/me", json={"digest_opt_in": True})  # rien à signaler : pas d'email
 
     with patch("app.digest.send_email") as send, SessionLocal() as db:

@@ -30,7 +30,7 @@ services:
         generateValue: true
       - key: WEB_CONCURRENCY
         value: "1"
-      # Démo : compte demo@example.com créé au premier démarrage, inscriptions fermées
+      # Démo : compte demo créé au premier démarrage, inscriptions fermées
       - key: DEMO_MODE
         value: "true"
       - key: ALLOW_REGISTRATION
