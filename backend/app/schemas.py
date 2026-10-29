@@ -3,7 +3,15 @@ from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, Field, StringConstraints, model_validator
 
-from app.enums import FollowUpReason, PresenceStatus, Recurrence, TaskPriority, TaskStatus
+from app.enums import (
+    FollowUpReason,
+    PresenceStatus,
+    ProjectStatus,
+    Recurrence,
+    TaskKind,
+    TaskPriority,
+    TaskStatus,
+)
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 OptionalName = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None
@@ -204,6 +212,76 @@ class TaskPage(BaseModel):
 
 class FollowUpItem(TaskSummary):
     follow_up_reason: FollowUpReason
+
+
+# ─── Projets ────────────────────────────────────────────────────────────────
+
+
+class ProjectCreate(BaseModel):
+    name: Name
+    description: str | None = None
+    status: ProjectStatus = ProjectStatus.IDEA
+
+
+class ProjectUpdate(BaseModel):
+    name: Name | None = None
+    description: str | None = None
+    status: ProjectStatus | None = None
+
+
+class ProjectRead(BaseModel):
+    id: str
+    name: str
+    slug: str
+    description: str | None = None
+    status: ProjectStatus
+    created_at: datetime
+    archived_at: datetime | None = None
+    tasks_total: int = 0
+    tasks_done: int = 0
+    progress: int = 0
+
+    model_config = {"from_attributes": True}
+
+
+class ProjectTaskCreate(BaseModel):
+    project_id: str
+    title: Name
+    kind: TaskKind = TaskKind.TASK
+    description: str | None = None
+    status: TaskStatus = TaskStatus.TODO
+    priority: TaskPriority = TaskPriority.MEDIUM
+    due_date: date | None = None
+    recurrence: Recurrence | None = None
+    recurrence_interval: int = Field(default=1, ge=1, le=365)
+
+
+class ProjectTaskUpdate(BaseModel):
+    title: Name | None = None
+    kind: TaskKind | None = None
+    description: str | None = None
+    status: TaskStatus | None = None
+    priority: TaskPriority | None = None
+    due_date: date | None = None
+    recurrence: Recurrence | None = None
+    recurrence_interval: int | None = Field(default=None, ge=1, le=365)
+
+
+class ProjectTaskRead(BaseModel):
+    id: str
+    project_id: str
+    kind: TaskKind
+    title: str
+    description: str | None = None
+    status: TaskStatus
+    priority: TaskPriority
+    due_date: date | None = None
+    recurrence: Recurrence | None = None
+    recurrence_interval: int = 1
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 # ─── Récap quotidien ────────────────────────────────────────────────────────

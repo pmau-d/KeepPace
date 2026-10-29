@@ -41,3 +41,18 @@ class Recurrence(StrEnum):
     WEEKLY = "WEEKLY"
     MONTHLY = "MONTHLY"
     YEARLY = "YEARLY"
+
+
+class ProjectStatus(StrEnum):
+    IDEA = "IDEA"
+    ACTIVE = "ACTIVE"
+    PAUSED = "PAUSED"
+    DELIVERED = "DELIVERED"
+
+
+class TaskKind(StrEnum):
+    """Nature d'une tâche de projet : travail prévu, bug à corriger ou retour d'amélioration."""
+
+    TASK = "TASK"
+    BUG = "BUG"
+    IMPROVEMENT = "IMPROVEMENT"

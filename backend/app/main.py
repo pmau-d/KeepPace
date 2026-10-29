@@ -9,7 +9,7 @@ from app import models  # noqa: F401 — enregistre les modèles dans Base.metad
 from app.config import settings
 from app.database import engine, wait_for_db
 from app.digest import start_scheduler
-from app.routers import auth, clients, companies, digest, tasks
+from app.routers import auth, clients, companies, digest, project_tasks, projects, tasks
 
 
 @asynccontextmanager
@@ -46,6 +46,8 @@ app.include_router(digest.router)
 app.include_router(companies.router)
 app.include_router(clients.router)
 app.include_router(tasks.router)
+app.include_router(projects.router)
+app.include_router(project_tasks.router)
 
 
 @app.get("/")

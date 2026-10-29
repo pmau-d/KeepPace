@@ -17,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import column_property, relationship
 
 from app.database import Base
-from app.enums import Recurrence, TaskPriority, TaskStatus
+from app.enums import ProjectStatus, Recurrence, TaskKind, TaskPriority, TaskStatus
 from app.types import UTCDateTime, utcnow
 
 
@@ -128,6 +128,61 @@ class Task(Base):
     )
 
 
+class Project(Base):
+    """Projet de développement : indépendant des clients (ni présence ni relance)."""
+
+    __tablename__ = "projects"
+    __table_args__ = (UniqueConstraint("owner_id", "slug", name="uq_projects_owner_slug"),)
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    owner_id = _owner_column()
+    name = Column(String, nullable=False)
+    slug = Column(String, nullable=False)  # adresse /projets/<slug> de la vitrine publique
+    description = Column(Text, nullable=True)
+    status = Column(_enum(ProjectStatus, "project_status"), nullable=False, default=ProjectStatus.IDEA)
+    is_public = Column(Boolean, nullable=False, default=False, server_default="false")
+    created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
+    updated_at = Column(
+        UTCDateTime, nullable=False, default=utcnow, server_default=func.now(), onupdate=utcnow
+    )
+    archived_at = _archived_column()
+
+    tasks = relationship("ProjectTask", back_populates="project")
+
+    @property
+    def progress(self) -> int:
+        """Pourcentage de tâches terminées (0 quand le projet n'a pas de tâche)."""
+        return round(100 * self.tasks_done / self.tasks_total) if self.tasks_total else 0
+
+
+class ProjectTask(Base):
+    __tablename__ = "project_tasks"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    owner_id = _owner_column()
+    project_id = Column(String, ForeignKey("projects.id"), nullable=False, index=True)
+    kind = Column(_enum(TaskKind, "project_task_kind"), nullable=False, default=TaskKind.TASK)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(_enum(TaskStatus, "project_task_status"), nullable=False, default=TaskStatus.TODO)
+    priority = Column(
+        _enum(TaskPriority, "project_task_priority"), nullable=False, default=TaskPriority.MEDIUM
+    )
+    due_date = Column(Date, nullable=True)
+    recurrence = Column(_enum(Recurrence, "project_task_recurrence"), nullable=True)
+    recurrence_interval = Column(Integer, nullable=False, default=1, server_default="1")
+    created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
+    updated_at = Column(
+        UTCDateTime, nullable=False, default=utcnow, server_default=func.now(), onupdate=utcnow
+    )
+    archived_at = _archived_column()
+    # Renseigné quand l'occurrence suivante a été créée : une seule fois, même si
+    # la tâche est réouverte puis refermée.
+    recurred_at = Column(UTCDateTime, nullable=True)
+
+    project = relationship("Project", back_populates="tasks")
+
+
 class TaskComment(Base):
     __tablename__ = "task_comments"
 
@@ -183,5 +238,23 @@ Client.open_tasks_count = column_property(
     select(func.count(Task.id))
     .where(Task.client_id == Client.id, Task.status != TaskStatus.DONE, Task.archived_at.is_(None))
     .correlate_except(Task)
+    .scalar_subquery()
+)
+
+# Avancement d'un projet : tâches actives, et parmi elles les terminées.
+Project.tasks_total = column_property(
+    select(func.count(ProjectTask.id))
+    .where(ProjectTask.project_id == Project.id, ProjectTask.archived_at.is_(None))
+    .correlate_except(ProjectTask)
+    .scalar_subquery()
+)
+Project.tasks_done = column_property(
+    select(func.count(ProjectTask.id))
+    .where(
+        ProjectTask.project_id == Project.id,
+        ProjectTask.archived_at.is_(None),
+        ProjectTask.status == TaskStatus.DONE,
+    )
+    .correlate_except(ProjectTask)
     .scalar_subquery()
 )

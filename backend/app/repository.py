@@ -37,3 +37,11 @@ def get_client(db: Session, client_id: str, user: models.User, archived=False) -
 
 def get_task(db: Session, task_id: str, user: models.User, archived=False) -> models.Task:
     return get_owned_or_404(db, models.Task, task_id, user, "Tâche", archived)
+
+
+def get_project(db: Session, project_id: str, user: models.User, archived=False) -> models.Project:
+    return get_owned_or_404(db, models.Project, project_id, user, "Projet", archived)
+
+
+def get_project_task(db: Session, task_id: str, user: models.User, archived=False) -> models.ProjectTask:
+    return get_owned_or_404(db, models.ProjectTask, task_id, user, "Tâche de projet", archived)

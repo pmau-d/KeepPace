@@ -65,3 +65,19 @@ def restore_company(db: Session, company: models.Company) -> None:
     for client in company.clients:
         if client.archived_at == at:
             restore_client(db, client)
+
+
+def archive_project(db: Session, project: models.Project) -> None:
+    at = utcnow()
+    project.archived_at = at
+    for task in project.tasks:
+        if task.archived_at is None:
+            task.archived_at = at
+
+
+def restore_project(db: Session, project: models.Project) -> None:
+    at = project.archived_at
+    project.archived_at = None
+    for task in project.tasks:
+        if task.archived_at == at:
+            task.archived_at = None
