@@ -22,7 +22,7 @@ from app.presence import today
 from app.security import hash_password
 from app.types import utcnow
 
-DEMO_EMAIL = "demo@example.com"
+DEMO_USERNAME = "demo"
 DEMO_PASSWORD = os.environ.get("DEMO_PASSWORD", "demo-keeppace-2026")
 
 # (entreprise, prénom, nom, début d'absence, fin d'absence) — décalages en jours
@@ -89,11 +89,13 @@ COMMENTS = {
 def seed(db: Session) -> models.User:
     if settings.ENVIRONMENT == "production" and not settings.DEMO_MODE:
         raise SystemExit("Refusé : pas de données de démonstration en production (DEMO_MODE=false).")
-    if db.query(models.User).filter(models.User.email == DEMO_EMAIL).first():
-        raise SystemExit(f"Le compte {DEMO_EMAIL} existe déjà : rien à faire.")
+    if db.query(models.User).filter(models.User.username == DEMO_USERNAME).first():
+        raise SystemExit(f"Le compte {DEMO_USERNAME} existe déjà : rien à faire.")
 
     user = models.User(
-        email=DEMO_EMAIL, full_name="Compte de démonstration", password_hash=hash_password(DEMO_PASSWORD)
+        username=DEMO_USERNAME,
+        full_name="Compte de démonstration",
+        password_hash=hash_password(DEMO_PASSWORD),
     )
     db.add(user)
     db.flush()
@@ -158,7 +160,7 @@ def seed(db: Session) -> models.User:
 def main() -> None:
     with SessionLocal() as db:
         seed(db)
-    print(f"Compte de démonstration créé : {DEMO_EMAIL} / {DEMO_PASSWORD}")
+    print(f"Compte de démonstration créé : {DEMO_USERNAME} / {DEMO_PASSWORD}")
 
 
 if __name__ == "__main__":

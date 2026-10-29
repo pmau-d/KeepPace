@@ -19,11 +19,7 @@
         >
           <Menu class="w-5 h-5" aria-hidden="true" />
         </button>
-        <span
-          class="w-7 h-7 bg-linear-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center text-white font-bold text-xs"
-          aria-hidden="true"
-          >KP</span
-        >
+        <AppLogo size="sm" />
         <span class="font-bold text-slate-800 dark:text-white">KeepPace</span>
       </div>
       <RouterView />
@@ -60,6 +56,7 @@
 import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Menu } from '@lucide/vue'
+import AppLogo from './components/AppLogo.vue'
 import Sidebar from './components/Sidebar.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'

@@ -15,8 +15,8 @@ from app.security import login_limiter
 PASSWORD = "correct-horse-battery"
 
 
-def register(api: TestClient, email: str) -> TestClient:
-    response = api.post("/auth/register", json={"email": email, "password": PASSWORD})
+def register(api: TestClient, username: str) -> TestClient:
+    response = api.post("/auth/register", json={"username": username, "password": PASSWORD})
     assert response.status_code == 201, response.text
     return api
 
@@ -34,11 +34,11 @@ def anon():
 @pytest.fixture()
 def client(anon):
     """Client HTTP connecté avec un compte « alice »."""
-    return register(anon, "alice@example.com")
+    return register(anon, "alice")
 
 
 @pytest.fixture()
 def other_client(client):
     """Second compte, indépendant du premier (cookies séparés)."""
     with TestClient(app) as test_client:
-        yield register(test_client, "bob@example.com")
+        yield register(test_client, "bob")

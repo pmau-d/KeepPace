@@ -8,11 +8,7 @@
   >
     <!-- Logo -->
     <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
-      <div
-        class="w-9 h-9 bg-linear-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-sm"
-      >
-        <span class="text-white font-bold text-sm">KP</span>
-      </div>
+      <AppLogo />
       <div class="flex-1">
         <p class="font-bold text-base text-slate-800 dark:text-white leading-none">KeepPace</p>
         <p class="text-xs text-slate-400 mt-0.5">Tableau de bord consultant</p>
@@ -165,9 +161,9 @@
     <div class="p-3 border-t border-slate-200 dark:border-slate-700 flex items-center gap-2">
       <div class="flex-1 min-w-0">
         <p class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
-          {{ auth.user?.full_name || auth.user?.email }}
+          {{ auth.user?.full_name || auth.user?.username }}
         </p>
-        <p v-if="auth.user?.full_name" class="text-xs text-slate-400 truncate">{{ auth.user.email }}</p>
+        <p v-if="auth.user?.full_name" class="text-xs text-slate-400 truncate">@{{ auth.user.username }}</p>
       </div>
       <button
         class="p-2 rounded-lg text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -220,6 +216,7 @@ import {
 } from '@lucide/vue'
 import { computed, ref, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AppLogo from './AppLogo.vue'
 import EditClientModal from './EditClientModal.vue'
 import InfoTooltip from './ui/InfoTooltip.vue'
 import ImportAbsencesModal from './ImportAbsencesModal.vue'

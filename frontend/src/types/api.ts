@@ -17,7 +17,10 @@ export type IsoDateTime = string
 
 export interface User {
   id: string
-  email: string
+  /** Identifiant de connexion, en minuscules. */
+  username: string
+  /** Facultatif : sert au récap quotidien par email. */
+  email: string | null
   full_name: string | null
   digest_opt_in: boolean
 }
@@ -39,7 +42,7 @@ export interface Digest {
 }
 
 export interface RegisterPayload {
-  email: string
+  username: string
   password: string
   full_name: string | null
 }

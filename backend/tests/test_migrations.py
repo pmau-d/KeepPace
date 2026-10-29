@@ -122,3 +122,18 @@ def test_legacy_database_is_upgraded_without_data_loss(engine):
         assert inspect(conn).has_table("task_comments")
         labels = conn.execute(text("SELECT old_label, new_label FROM task_logs WHERE id = 'l1'")).one()
         assert tuple(labels) == ("Bob · Globex", "Alice Martin · Acme")
+
+
+def test_existing_accounts_get_a_username_from_their_email(engine):
+    _upgrade(engine, "0008")
+    with engine.begin() as conn:
+        for user_id, email in (("u1", "alice@example.com"), ("u2", "Alice@other.org"), ("u3", "x@y.z")):
+            conn.execute(
+                text("INSERT INTO users (id, email, password_hash) VALUES (:i, :e, 'h')"),
+                {"i": user_id, "e": email},
+            )
+    _upgrade(engine)
+    with engine.connect() as conn:
+        names = dict(conn.execute(text("SELECT id, username FROM users")).all())
+    # Doublon suffixé ; pseudo trop court complété
+    assert names == {"u1": "alice", "u2": "alice2", "u3": "x00"}

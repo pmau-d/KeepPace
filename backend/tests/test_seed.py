@@ -1,13 +1,16 @@
 import pytest
 
 from app.database import SessionLocal
-from scripts.seed_demo import DEMO_EMAIL, DEMO_PASSWORD, seed
+from scripts.seed_demo import DEMO_PASSWORD, DEMO_USERNAME, seed
 
 
 def test_demo_seed_creates_a_usable_account(anon):
     with SessionLocal() as db:
         seed(db)
-    assert anon.post("/auth/login", json={"email": DEMO_EMAIL, "password": DEMO_PASSWORD}).status_code == 200
+    assert (
+        anon.post("/auth/login", json={"username": DEMO_USERNAME, "password": DEMO_PASSWORD}).status_code
+        == 200
+    )
     assert anon.get("/tasks/").json()["total"] == 8  # la tâche terminée est masquée par défaut
     reasons = {t["follow_up_reason"] for t in anon.get("/tasks/follow-up").json()}
     assert {"OVERDUE", "DUE_TODAY", "CLIENT_LEAVING", "CLIENT_BACK", "WAITING"} <= reasons
@@ -24,4 +27,4 @@ def test_demo_seed_is_refused_in_production_unless_demo_mode(anon, monkeypatch):
         seed(db)
     monkeypatch.setattr(settings, "DEMO_MODE", True)
     with SessionLocal() as db:
-        assert seed(db).email == DEMO_EMAIL
+        assert seed(db).username == DEMO_USERNAME

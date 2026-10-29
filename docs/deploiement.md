@@ -23,7 +23,7 @@ Le blueprint crée trois ressources :
 | `keeppace`     | Frontend (image `frontend/Dockerfile`) : nginx sert l'application et relaie `/api` vers l'API |
 
 Le mode démo est activé (`DEMO_MODE=true`) : au premier démarrage, l'API crée
-le compte **demo@example.com** (mot de passe `demo-keeppace-2026`, modifiable
+le compte **demo** (mot de passe `demo-keeppace-2026`, modifiable
 avec `DEMO_PASSWORD`) rempli de données fictives. Les inscriptions sont
 fermées (`ALLOW_REGISTRATION=false`) et `SECRET_KEY` est générée par Render.
 

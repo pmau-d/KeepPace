@@ -7,6 +7,14 @@ projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Modifié
+
+- **Connexion par pseudo et mot de passe** : l'email n'est plus demandé. Les
+  comptes existants reçoivent un pseudo tiré de leur email (`alice` pour
+  `alice@example.com`) et peuvent toujours se connecter avec leur email. L'email
+  reste facultatif ; il ne sert qu'au récap quotidien. Le compte de démonstration
+  devient `demo`.
+
 ### Ajouté
 
 - **Projets de développement**, séparés des clients : une page par projet avec

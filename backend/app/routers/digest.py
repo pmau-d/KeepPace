@@ -21,6 +21,8 @@ def send_now(db: Session = Depends(get_db), user: models.User = Depends(get_curr
     """Envoie le récap du jour à son propre email (pour vérifier la configuration)."""
     if not settings.email_enabled:
         raise HTTPException(status_code=409, detail="L'envoi d'emails n'est pas configuré sur ce serveur")
+    if not user.email:
+        raise HTTPException(status_code=409, detail="Ajoutez d'abord une adresse email à votre compte")
     try:
         send_email(render_email(user, build_digest(db, user)))
     except OSError as error:

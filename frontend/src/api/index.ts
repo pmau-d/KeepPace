@@ -83,7 +83,7 @@ function toSearchParams(params: TaskQuery): URLSearchParams {
 // ─── Auth ───────────────────────────────────────────────────────────────────
 export const authApi = {
   me: () => api.get<User>('/auth/me'),
-  login: (data: { email: string; password: string }) => api.post<User>('/auth/login', data),
+  login: (data: { username: string; password: string }) => api.post<User>('/auth/login', data),
   register: (data: RegisterPayload) => api.post<User>('/auth/register', data),
   logout: () => api.post<void>('/auth/logout'),
   update: (data: { full_name?: string | null; digest_opt_in?: boolean }) => api.put<User>('/auth/me', data),

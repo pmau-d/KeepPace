@@ -41,10 +41,16 @@ def _enum(enum_cls, name: str) -> Enum:
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = (UniqueConstraint("email", name="users_email_key"),)
+    __table_args__ = (
+        UniqueConstraint("email", name="users_email_key"),
+        UniqueConstraint("username", name="users_username_key"),
+    )
 
     id = Column(String, primary_key=True, default=gen_uuid)
-    email = Column(String(320), nullable=False)
+    # Identifiant de connexion, en minuscules. L'email est facultatif : il ne sert
+    # qu'au récap quotidien (et à se connecter pour les comptes créés avant les pseudos).
+    username = Column(String(32), nullable=False)
+    email = Column(String(320), nullable=True)
     full_name = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
     is_active = Column(Boolean, nullable=False, default=True, server_default="true")
