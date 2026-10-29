@@ -8,7 +8,7 @@
         <span class="font-bold text-slate-800 dark:text-white">KeepPace</span>
       </RouterLink>
       <RouterLink
-        :to="auth.isAuthenticated ? { name: 'tasks' } : { name: 'login' }"
+        :to="auth.isAuthenticated ? { name: 'home' } : { name: 'login' }"
         class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
       >
         {{ auth.isAuthenticated ? 'Mon espace' : 'Se connecter' }}

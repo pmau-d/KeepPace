@@ -204,6 +204,7 @@ import {
   CalendarPlus,
   CalendarRange,
   FolderKanban,
+  House,
   ListTodo,
   LogOut,
   Megaphone,
@@ -258,6 +259,7 @@ const editingClient = ref<Client | null>(null)
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 const navigation: NavItem[] = [
+  { name: 'home', label: 'Accueil', icon: House, matches: ['home'] },
   { name: 'tasks', label: 'Toutes les tâches', icon: ListTodo, matches: ['tasks', 'task'] },
   { name: 'board', label: 'Tableau', icon: SquareKanban, matches: ['board'] },
   { name: 'follow-up', label: 'À relancer', icon: Megaphone, matches: ['follow-up'] },

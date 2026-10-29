@@ -17,6 +17,12 @@ projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 
+- **Accueil** : une page d'ouverture qui tient en un coup d'œil, avec les chiffres
+  du jour (à relancer, tâches ouvertes, bugs ouverts, projets actifs), les
+  relances du jour, les prochaines tâches, les projets actifs avec leur
+  avancement et les bugs ouverts. La liste complète des tâches est sur
+  `/taches` ; les liens `/tasks/<id>` existants continuent de fonctionner.
+  Raccourci : `g` puis `h`.
 - **Checklists (mode « check ticket »)** sur les tâches clientes et les tâches de
   projet : des cases à cocher par tâche, avec progression « 3/5 » dans les
   listes. Terminer une tâche récurrente (par exemple toutes les 2 semaines) crée

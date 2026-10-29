@@ -10,7 +10,8 @@ const routes = [
     meta: { guest: true },
     props: { mode: 'register' },
   },
-  { path: '/', name: 'tasks', component: () => import('../views/TasksView.vue') },
+  { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
+  { path: '/taches', name: 'tasks', component: () => import('../views/TasksView.vue') },
   { path: '/tasks/:id', name: 'task', component: () => import('../views/TasksView.vue'), props: true },
   { path: '/relances', name: 'follow-up', component: () => import('../views/FollowUpView.vue') },
   { path: '/planning', name: 'planning', component: () => import('../views/PlanningView.vue') },
@@ -47,7 +48,7 @@ export function createAppRouter(history = createWebHistory()) {
     const auth = useAuthStore()
     if (!auth.checked) await auth.fetchMe()
     if (to.meta.public) return true
-    if (to.meta.guest) return auth.isAuthenticated ? { name: 'tasks' } : true
+    if (to.meta.guest) return auth.isAuthenticated ? { name: 'home' } : true
     if (!auth.isAuthenticated)
       return { name: 'login', query: to.fullPath !== '/' ? { redirect: to.fullPath } : {} }
     return true
