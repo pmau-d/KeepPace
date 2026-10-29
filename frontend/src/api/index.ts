@@ -12,6 +12,7 @@ import type {
   ProjectTaskUpdatePayload,
   PublicProject,
   PublicProjectCard,
+  ChecklistItem,
   TaskKind,
   RegisterPayload,
   Task,
@@ -139,6 +140,12 @@ export const projectTasksApi = {
   close: (id: string) => api.post<ProjectTask>(`/project-tasks/${id}/close`),
   reopen: (id: string) => api.post<ProjectTask>(`/project-tasks/${id}/reopen`),
   archive: (id: string) => api.delete<void>(`/project-tasks/${id}`),
+  addChecklistItem: (id: string, label: string) =>
+    api.post<ChecklistItem>(`/project-tasks/${id}/checklist`, { label }),
+  updateChecklistItem: (id: string, itemId: string, data: { label?: string; done?: boolean }) =>
+    api.put<ChecklistItem>(`/project-tasks/${id}/checklist/${itemId}`, data),
+  deleteChecklistItem: (id: string, itemId: string) =>
+    api.delete<void>(`/project-tasks/${id}/checklist/${itemId}`),
 }
 
 // ─── Tasks ──────────────────────────────────────────────────────────────────
@@ -159,4 +166,9 @@ export const tasksApi = {
   addComment: (id: string, content: string) => api.post<TaskComment>(`/tasks/${id}/comments`, { content }),
   deleteComment: (taskId: string, commentId: string) =>
     api.delete<void>(`/tasks/${taskId}/comments/${commentId}`),
+  addChecklistItem: (id: string, label: string) =>
+    api.post<ChecklistItem>(`/tasks/${id}/checklist`, { label }),
+  updateChecklistItem: (id: string, itemId: string, data: { label?: string; done?: boolean }) =>
+    api.put<ChecklistItem>(`/tasks/${id}/checklist/${itemId}`, data),
+  deleteChecklistItem: (id: string, itemId: string) => api.delete<void>(`/tasks/${id}/checklist/${itemId}`),
 }

@@ -132,6 +132,29 @@ class TaskCommentRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ─── Checklist ──────────────────────────────────────────────────────────────
+
+ChecklistLabel = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+
+
+class ChecklistItemCreate(BaseModel):
+    label: ChecklistLabel
+
+
+class ChecklistItemUpdate(BaseModel):
+    label: ChecklistLabel | None = None
+    done: bool | None = None
+
+
+class ChecklistItemRead(BaseModel):
+    id: str
+    label: str
+    done: bool
+    position: int
+
+    model_config = {"from_attributes": True}
+
+
 # ─── TaskLog ─────────────────────────────────────────────────────────────────
 
 
@@ -202,6 +225,8 @@ class TaskSummary(BaseModel):
     archived_at: datetime | None = None
     client: ClientRead
     comments_count: int = 0
+    checklist_total: int = 0
+    checklist_done: int = 0
 
     model_config = {"from_attributes": True}
 
@@ -210,6 +235,7 @@ class TaskRead(TaskSummary):
     """Détail d'une tâche ; le journal se lit via GET /tasks/{id}/logs."""
 
     comments: list[TaskCommentRead] = []
+    checklist: list[ChecklistItemRead] = []
 
 
 class TaskPage(BaseModel):
@@ -317,6 +343,7 @@ class ProjectTaskRead(BaseModel):
     recurrence_interval: int = 1
     created_at: datetime
     updated_at: datetime
+    checklist: list[ChecklistItemRead] = []
 
     model_config = {"from_attributes": True}
 

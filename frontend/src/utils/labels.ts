@@ -93,6 +93,7 @@ const FIELD_LABELS: Record<string, string> = {
   client_id: 'Client',
   archived: 'Archivage',
   comment: 'Commentaire',
+  checklist: 'Checklist',
   recurrence: 'Récurrence',
   recurrence_interval: 'Intervalle de récurrence',
   next_occurrence: 'Occurrence suivante',

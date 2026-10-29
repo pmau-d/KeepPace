@@ -192,6 +192,7 @@
             :task="task"
             @toggle="toggleTask"
             @archive="archiveTask"
+            @changed="refresh"
           />
         </ul>
 
@@ -215,6 +216,7 @@
               :task="task"
               @toggle="toggleTask"
               @archive="archiveTask"
+              @changed="refresh"
             />
           </ul>
         </section>

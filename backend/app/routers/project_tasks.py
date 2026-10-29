@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import asc, case, nulls_last
 from sqlalchemy.orm import Session
 
-from app import models, schemas
+from app import checklist, models, schemas
 from app.database import get_db
 from app.deps import get_current_user
 from app.enums import TaskKind, TaskPriority, TaskStatus
@@ -28,20 +28,21 @@ def _spawn_next_occurrence(task: models.ProjectTask, db: Session) -> None:
     """Terminer une tâche récurrente crée l'occurrence suivante, une seule fois."""
     if task.recurrence is None or task.archived_at is not None or task.recurred_at is not None:
         return
-    db.add(
-        models.ProjectTask(
-            owner_id=task.owner_id,
-            project_id=task.project_id,
-            kind=task.kind,
-            title=task.title,
-            description=task.description,
-            priority=task.priority,
-            status=TaskStatus.TODO,
-            due_date=next_occurrence(task.due_date, task.recurrence, task.recurrence_interval, today()),
-            recurrence=task.recurrence,
-            recurrence_interval=task.recurrence_interval,
-        )
+    follow = models.ProjectTask(
+        owner_id=task.owner_id,
+        project_id=task.project_id,
+        kind=task.kind,
+        title=task.title,
+        description=task.description,
+        priority=task.priority,
+        status=TaskStatus.TODO,
+        due_date=next_occurrence(task.due_date, task.recurrence, task.recurrence_interval, today()),
+        recurrence=task.recurrence,
+        recurrence_interval=task.recurrence_interval,
     )
+    db.add(follow)
+    db.flush()
+    checklist.copy_unchecked(db, task, follow)
     task.recurred_at = utcnow()
 
 
@@ -81,6 +82,13 @@ def create_project_task(
     db.commit()
     db.refresh(task)
     return task
+
+
+@router.get("/{task_id}", response_model=schemas.ProjectTaskRead)
+def read_project_task(
+    task_id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+):
+    return get_project_task(db, task_id, user)
 
 
 @router.put("/{task_id}", response_model=schemas.ProjectTaskRead)
@@ -135,4 +143,45 @@ def delete_project_task(
 ):
     """Archive la tâche : elle disparaît des listes et de l'avancement."""
     get_project_task(db, task_id, user).archived_at = utcnow()
+    db.commit()
+
+
+@router.post("/{task_id}/checklist", response_model=schemas.ChecklistItemRead, status_code=201)
+def add_checklist_item(
+    task_id: str,
+    data: schemas.ChecklistItemCreate,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    item = checklist.add_item(db, get_project_task(db, task_id, user), data.label)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.put("/{task_id}/checklist/{item_id}", response_model=schemas.ChecklistItemRead)
+def update_checklist_item(
+    task_id: str,
+    item_id: str,
+    data: schemas.ChecklistItemUpdate,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    item = checklist.get_item(get_project_task(db, task_id, user), item_id)
+    for field, value in data.model_dump(exclude_unset=True).items():
+        if value is not None:
+            setattr(item, field, value)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.delete("/{task_id}/checklist/{item_id}", status_code=204)
+def delete_checklist_item(
+    task_id: str,
+    item_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    db.delete(checklist.get_item(get_project_task(db, task_id, user), item_id))
     db.commit()

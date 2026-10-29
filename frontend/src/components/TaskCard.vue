@@ -41,6 +41,19 @@
           <Repeat class="w-3 h-3" aria-hidden="true" />
         </span>
         <span
+          v-if="task.checklist_total"
+          :class="[
+            'text-[10px] flex items-center gap-0.5',
+            task.checklist_done === task.checklist_total
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-slate-400',
+          ]"
+          :title="`Checklist : ${task.checklist_done} sur ${task.checklist_total}`"
+        >
+          <ListChecks class="w-3 h-3" aria-hidden="true" />
+          {{ task.checklist_done }}/{{ task.checklist_total }}
+        </span>
+        <span
           v-if="task.comments_count"
           class="text-[10px] text-slate-400 flex items-center gap-0.5"
           :title="`${task.comments_count} commentaire(s)`"
@@ -114,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { Calendar, MessageSquare, Repeat } from '@lucide/vue'
+import { Calendar, ListChecks, MessageSquare, Repeat } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import StatusBadge from './StatusBadge.vue'
 import PriorityFlag from './PriorityFlag.vue'
