@@ -34,6 +34,7 @@ def database_url(tmp_path):
 
 
 TABLES = (
+    "checklist_items",
     "project_tasks",
     "projects",
     "task_logs",
