@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     Date,
     Enum,
@@ -132,6 +133,9 @@ class Task(Base):
     comments = relationship(
         "TaskComment", back_populates="task", cascade="all, delete-orphan", order_by="TaskComment.created_at"
     )
+    checklist = relationship(
+        "ChecklistItem", order_by="ChecklistItem.position", lazy="selectin", passive_deletes=True
+    )
 
 
 class Project(Base):
@@ -187,6 +191,32 @@ class ProjectTask(Base):
     recurred_at = Column(UTCDateTime, nullable=True)
 
     project = relationship("Project", back_populates="tasks")
+    checklist = relationship(
+        "ChecklistItem", order_by="ChecklistItem.position", lazy="selectin", passive_deletes=True
+    )
+
+
+class ChecklistItem(Base):
+    """Case à cocher d'une tâche cliente OU d'une tâche de projet (jamais les deux)."""
+
+    __tablename__ = "checklist_items"
+    __table_args__ = (
+        CheckConstraint(
+            "(task_id IS NOT NULL AND project_task_id IS NULL)"
+            " OR (task_id IS NULL AND project_task_id IS NOT NULL)",
+            name="checklist_item_one_parent",
+        ),
+    )
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    task_id = Column(String, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True, index=True)
+    project_task_id = Column(
+        String, ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    label = Column(String(200), nullable=False)
+    done = Column(Boolean, nullable=False, default=False, server_default="false")
+    position = Column(Integer, nullable=False, default=0, server_default="0")
+    created_at = Column(UTCDateTime, nullable=False, default=utcnow, server_default=func.now())
 
 
 class TaskComment(Base):
@@ -264,3 +294,18 @@ Project.tasks_done = column_property(
     .correlate_except(ProjectTask)
     .scalar_subquery()
 )
+
+# Progression des checklists (« 3/5 »), calculée sans charger les cases.
+for _model, _fk in ((Task, ChecklistItem.task_id), (ProjectTask, ChecklistItem.project_task_id)):
+    _model.checklist_total = column_property(
+        select(func.count(ChecklistItem.id))
+        .where(_fk == _model.id)
+        .correlate_except(ChecklistItem)
+        .scalar_subquery()
+    )
+    _model.checklist_done = column_property(
+        select(func.count(ChecklistItem.id))
+        .where(_fk == _model.id, ChecklistItem.done.is_(True))
+        .correlate_except(ChecklistItem)
+        .scalar_subquery()
+    )

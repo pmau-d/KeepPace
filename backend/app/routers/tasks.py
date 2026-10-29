@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import asc, nulls_last, or_, select
 from sqlalchemy.orm import Session, joinedload
 
-from app import models, schemas
+from app import checklist, models, schemas
 from app.archive import archive_task, restore_task
 from app.csv_export import tasks_to_csv
 from app.database import get_db
@@ -130,6 +130,7 @@ def _spawn_next_occurrence(db: Session, task: models.Task) -> models.Task | None
     )
     db.add(follow)
     db.flush()
+    checklist.copy_unchecked(db, task, follow)
     rhythm = describe(task.recurrence, task.recurrence_interval)
     db.add(_log(follow, "status", None, TaskStatus.TODO, f"Tâche créée (récurrence : {rhythm})"))
     db.add(_log(task, "next_occurrence", None, due.isoformat(), "Occurrence suivante créée"))
@@ -344,4 +345,56 @@ def delete_task_comment(
     # Le contenu supprimé reste tracé dans le journal de la tâche.
     db.add(_log(task, "comment", comment.content, None, "Commentaire supprimé"))
     db.delete(comment)
+    db.commit()
+
+
+@router.post("/{task_id}/checklist", response_model=schemas.ChecklistItemRead, status_code=201)
+def add_checklist_item(
+    task_id: str,
+    data: schemas.ChecklistItemCreate,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    task = get_task(db, task_id, user)
+    item = checklist.add_item(db, task, data.label)
+    db.add(_log(task, "checklist", None, None, f"Case ajoutée : « {item.label} »"))
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.put("/{task_id}/checklist/{item_id}", response_model=schemas.ChecklistItemRead)
+def update_checklist_item(
+    task_id: str,
+    item_id: str,
+    data: schemas.ChecklistItemUpdate,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    task = get_task(db, task_id, user)
+    item = checklist.get_item(task, item_id)
+    if data.label is not None and data.label != item.label:
+        db.add(_log(task, "checklist", None, None, f"Case renommée : « {item.label} » → « {data.label} »"))
+        item.label = data.label
+    if data.done is not None and data.done != item.done:
+        verb = "cochée" if data.done else "décochée"
+        db.add(_log(task, "checklist", None, None, f"Case {verb} : « {item.label} »"))
+        item.done = data.done
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.delete("/{task_id}/checklist/{item_id}", status_code=204)
+def delete_checklist_item(
+    task_id: str,
+    item_id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    task = get_task(db, task_id, user)
+    item = checklist.get_item(task, item_id)
+    # Le libellé supprimé reste tracé dans le journal de la tâche.
+    db.add(_log(task, "checklist", None, None, f"Case supprimée : « {item.label} »"))
+    db.delete(item)
     db.commit()
