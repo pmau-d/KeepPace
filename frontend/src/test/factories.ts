@@ -38,6 +38,8 @@ export function makeTask(overrides: Partial<TaskSummary> = {}): TaskSummary {
     created_at: '2026-09-01T09:00:00Z',
     updated_at: '2026-09-01T09:00:00Z',
     archived_at: null,
+    checklist_total: 0,
+    checklist_done: 0,
     client: makeClient(),
     comments_count: 0,
     ...overrides,
@@ -107,6 +109,7 @@ export function makeProjectTask(overrides: Partial<ProjectTask> = {}): ProjectTa
     recurrence_interval: 1,
     created_at: '2026-09-01T09:00:00Z',
     updated_at: '2026-09-01T09:00:00Z',
+    checklist: [],
     ...overrides,
   }
 }

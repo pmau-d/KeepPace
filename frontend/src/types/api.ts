@@ -77,6 +77,13 @@ export interface ClientPayload {
   absence_end_date?: IsoDate | null
 }
 
+export interface ChecklistItem {
+  id: string
+  label: string
+  done: boolean
+  position: number
+}
+
 export interface TaskComment {
   id: string
   task_id: string
@@ -113,10 +120,13 @@ export interface TaskSummary {
   archived_at: IsoDateTime | null
   client: Client
   comments_count: number
+  checklist_total: number
+  checklist_done: number
 }
 
 export interface Task extends TaskSummary {
   comments: TaskComment[]
+  checklist: ChecklistItem[]
 }
 
 export interface TaskPage {
@@ -218,6 +228,7 @@ export interface ProjectTask {
   recurrence_interval: number
   created_at: IsoDateTime
   updated_at: IsoDateTime
+  checklist: ChecklistItem[]
 }
 
 export interface ProjectTaskCreatePayload {

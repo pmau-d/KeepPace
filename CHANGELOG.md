@@ -17,6 +17,13 @@ projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 
+- **Checklists (mode « check ticket »)** sur les tâches clientes et les tâches de
+  projet : des cases à cocher par tâche, avec progression « 3/5 » dans les
+  listes. Terminer une tâche récurrente (par exemple toutes les 2 semaines) crée
+  la suivante avec les mêmes cases décochées, l'occurrence terminée gardant les
+  siennes comme trace de ce qui a été vérifié. Quand tout est coché, l'interface
+  propose « Terminer la tâche ». Les changements de cases des tâches clientes
+  figurent dans l'historique.
 - **Vitrine publique des projets** : chaque projet peut être rendu public d'un
   clic. Un visiteur sans compte voit alors, sur `/projets` et `/projets/<adresse>`,
   son nom, sa description, son état, son avancement en pourcentage et ses tâches

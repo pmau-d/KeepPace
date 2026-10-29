@@ -62,6 +62,9 @@ historique qui n'est jamais effacé.
 - **Projets de développement** : une page par projet (avancement, état) avec
   des tâches typées (tâche, bug, amélioration), filtrables par onglet, et
   récurrentes si besoin (ex. toutes les 2 semaines). Indépendants des clients.
+- **Checklists « check ticket »** : des cases à cocher par tâche, remises à zéro
+  à chaque occurrence d'une tâche récurrente (revue hebdomadaire ou bimensuelle
+  des tickets, par exemple), avec progression dans les listes.
 - **Vitrine publique** : un projet peut être publié sur `/projets` (nom,
   description, état, avancement, tâches terminées), visible sans connexion.
   Tout le reste, clients compris, reste privé.

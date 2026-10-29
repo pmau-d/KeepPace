@@ -81,6 +81,12 @@
             >
               {{ tab.label }}
               <span
+                v-if="tab.id === 'checklist' && task.checklist.length"
+                class="text-xs px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-semibold"
+              >
+                {{ task.checklist.filter((item) => item.done).length }}/{{ task.checklist.length }}
+              </span>
+              <span
                 v-if="tab.id === 'comments' && task.comments.length"
                 class="text-xs px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-semibold"
               >
@@ -96,6 +102,14 @@
               @updated="onUpdated"
               @duplicate="$emit('duplicate', task)"
               @archived="onArchived"
+            />
+            <TaskChecklist
+              v-else-if="activeTab === 'checklist'"
+              v-model:items="task.checklist"
+              :task-id="task.id"
+              :can-finish="task.status !== 'DONE'"
+              @changed="onChecklistChanged"
+              @finish="finish"
             />
             <TaskComments
               v-else-if="activeTab === 'comments'"
@@ -117,6 +131,7 @@ import { nextTick, ref, watch } from 'vue'
 import StatusBadge from '../StatusBadge.vue'
 import PriorityBadge from '../PriorityBadge.vue'
 import TaskEditForm from './TaskEditForm.vue'
+import TaskChecklist from './TaskChecklist.vue'
 import TaskComments from './TaskComments.vue'
 import TaskHistory from './TaskHistory.vue'
 import { useTaskStore } from '../../stores/taskStore'
@@ -131,13 +146,14 @@ const taskStore = useTaskStore()
 const task = ref<Task | null>(null)
 const loading = ref(true)
 const panel = ref<HTMLElement | null>(null)
-type Tab = 'edit' | 'comments' | 'history'
+type Tab = 'edit' | 'checklist' | 'comments' | 'history'
 const activeTab = ref<Tab>('edit')
 // Incrémenté à chaque modification pour recharger l'historique
 const historyVersion = ref(0)
 
 const tabs: { id: Tab; label: string }[] = [
   { id: 'edit', label: 'Modifier' },
+  { id: 'checklist', label: 'Checklist' },
   { id: 'comments', label: 'Commentaires' },
   { id: 'history', label: 'Historique' },
 ]
@@ -158,6 +174,20 @@ async function load() {
 
 function onUpdated(updated: TaskSummary) {
   if (task.value) task.value = { ...task.value, ...updated }
+  historyVersion.value++
+  emit('changed')
+}
+
+function onChecklistChanged() {
+  historyVersion.value++
+  emit('changed')
+}
+
+/** Tout est coché : l'utilisateur choisit de terminer (une récurrence crée alors la suivante). */
+async function finish() {
+  if (!task.value) return
+  const closed = await taskStore.closeTask(task.value.id)
+  task.value = { ...task.value, ...closed }
   historyVersion.value++
   emit('changed')
 }
