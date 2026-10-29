@@ -59,6 +59,9 @@ historique qui n'est jamais effacé.
   fournisseur »…), regroupées par jour avec les retards en tête ; mode compact.
 - **Tâches récurrentes** : chaque jour, semaine, mois ou année, avec un
   intervalle ; terminer une occurrence crée la suivante sans dériver.
+- **Projets de développement** : une page par projet (avancement, état) avec
+  des tâches typées (tâche, bug, amélioration), filtrables par onglet, et
+  récurrentes si besoin (ex. toutes les 2 semaines). Indépendants des clients.
 - **Tableau** (Kanban) par statut, au glisser-déposer ou au clavier.
 - **Historique complet** : chaque changement est journalisé avec des libellés
   lisibles ; supprimer archive (réversible, avec « Annuler ») au lieu d'effacer.

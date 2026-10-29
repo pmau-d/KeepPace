@@ -207,6 +207,7 @@ import {
   Archive,
   CalendarPlus,
   CalendarRange,
+  FolderKanban,
   ListTodo,
   LogOut,
   Megaphone,
@@ -264,6 +265,7 @@ const navigation: NavItem[] = [
   { name: 'board', label: 'Tableau', icon: SquareKanban, matches: ['board'] },
   { name: 'follow-up', label: 'À relancer', icon: Megaphone, matches: ['follow-up'] },
   { name: 'planning', label: 'Planning', icon: CalendarRange, matches: ['planning'] },
+  { name: 'projects', label: 'Projets', icon: FolderKanban, matches: ['projects', 'project'] },
   { name: 'archives', label: 'Archives', icon: Archive, matches: ['archives'] },
 ]
 

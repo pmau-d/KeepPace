@@ -1,5 +1,5 @@
 // Données de test complètes et typées : chaque test ne précise que ce qui le concerne.
-import type { Client, Company, TaskLog, TaskSummary, User } from '../types/api'
+import type { Client, Company, Project, ProjectTask, TaskLog, TaskSummary, User } from '../types/api'
 
 export function makeCompany(overrides: Partial<Company> = {}): Company {
   return { id: 'company-1', name: 'Atelier Boréal', archived_at: null, ...overrides }
@@ -66,4 +66,39 @@ export function makeUser(overrides: Partial<User> = {}): User {
 /** Réponse axios minimale pour les mocks. */
 export function response<T>(data: T) {
   return { data }
+}
+
+export function makeProject(overrides: Partial<Project> = {}): Project {
+  return {
+    id: 'project-1',
+    name: 'Site vitrine',
+    slug: 'site-vitrine',
+    description: null,
+    status: 'ACTIVE',
+    created_at: '2026-09-01T09:00:00Z',
+    archived_at: null,
+    tasks_total: 0,
+    tasks_done: 0,
+    progress: 0,
+    ...overrides,
+  }
+}
+
+export function makeProjectTask(overrides: Partial<ProjectTask> = {}): ProjectTask {
+  const id = overrides.id ?? 'ptask-1'
+  return {
+    id,
+    project_id: 'project-1',
+    kind: 'TASK',
+    title: id,
+    description: null,
+    status: 'TODO',
+    priority: 'MEDIUM',
+    due_date: null,
+    recurrence: null,
+    recurrence_interval: 1,
+    created_at: '2026-09-01T09:00:00Z',
+    updated_at: '2026-09-01T09:00:00Z',
+    ...overrides,
+  }
 }

@@ -4,7 +4,9 @@ import type {
   Client,
   FollowUpReason,
   PresenceStatus,
+  ProjectStatus,
   Recurrence,
+  TaskKind,
   TaskLog,
   TaskPriority,
   TaskStatus,
@@ -16,6 +18,19 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
   IN_PROGRESS: 'En cours',
   BLOCKED: 'En attente client',
   DONE: 'Terminé',
+}
+
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+  IDEA: 'Idée',
+  ACTIVE: 'En cours',
+  PAUSED: 'En pause',
+  DELIVERED: 'Livré',
+}
+
+export const KIND_LABELS: Record<TaskKind, string> = {
+  TASK: 'Tâche',
+  BUG: 'Bug',
+  IMPROVEMENT: 'Amélioration',
 }
 
 export const RECURRENCE_LABELS: Record<Recurrence, string> = {

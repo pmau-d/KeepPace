@@ -15,6 +15,8 @@ const routes = [
   { path: '/relances', name: 'follow-up', component: () => import('../views/FollowUpView.vue') },
   { path: '/planning', name: 'planning', component: () => import('../views/PlanningView.vue') },
   { path: '/tableau', name: 'board', component: () => import('../views/BoardView.vue') },
+  { path: '/projets', name: 'projects', component: () => import('../views/ProjectsView.vue') },
+  { path: '/projets/:id', name: 'project', component: () => import('../views/ProjectView.vue'), props: true },
   { path: '/archives', name: 'archives', component: () => import('../views/ArchivesView.vue') },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
