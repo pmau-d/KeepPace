@@ -33,7 +33,17 @@ def database_url(tmp_path):
     return os.environ.get("MIGRATION_TEST_DATABASE_URL") or f"sqlite:///{tmp_path / 'migrations.db'}"
 
 
-TABLES = ("task_logs", "task_comments", "tasks", "clients", "companies", "users", "alembic_version")
+TABLES = (
+    "project_tasks",
+    "projects",
+    "task_logs",
+    "task_comments",
+    "tasks",
+    "clients",
+    "companies",
+    "users",
+    "alembic_version",
+)
 
 
 def _drop_all(engine) -> None:

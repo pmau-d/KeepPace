@@ -7,6 +7,13 @@ projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- **Projets de développement**, séparés des clients : une page par projet avec
+  avancement, état (idée, en cours, en pause, livré) et tâches typées (tâche,
+  bug, amélioration) pour saisir les retours d'une présentation. Les tâches de
+  projet peuvent être récurrentes (par exemple toutes les 2 semaines).
+
 ## [1.1.0] — 2026-10-01
 
 ### Ajouté

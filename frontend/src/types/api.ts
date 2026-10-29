@@ -4,6 +4,9 @@
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE'
 export type TaskPriority = 'HIGH' | 'MEDIUM' | 'LOW'
 export type PresenceStatus = 'PRESENT' | 'LEAVING_SOON' | 'ABSENT' | 'SOON_BACK' | 'RECENTLY_BACK'
+export type ProjectStatus = 'IDEA' | 'ACTIVE' | 'PAUSED' | 'DELIVERED'
+/** Nature d'une tâche de projet. */
+export type TaskKind = 'TASK' | 'BUG' | 'IMPROVEMENT'
 export type Recurrence = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
 export type FollowUpReason = 'OVERDUE' | 'DUE_TODAY' | 'CLIENT_LEAVING' | 'CLIENT_BACK' | 'WAITING'
 
@@ -161,3 +164,53 @@ export interface TaskQuery {
   limit?: number
   offset?: number
 }
+
+export interface Project {
+  id: string
+  name: string
+  /** Adresse stable du projet (/projets/<slug> pour la vitrine publique). */
+  slug: string
+  description: string | null
+  status: ProjectStatus
+  created_at: IsoDateTime
+  archived_at: IsoDateTime | null
+  tasks_total: number
+  tasks_done: number
+  /** Pourcentage de tâches terminées, 0 à 100. */
+  progress: number
+}
+
+export interface ProjectPayload {
+  name?: string
+  description?: string | null
+  status?: ProjectStatus
+}
+
+export interface ProjectTask {
+  id: string
+  project_id: string
+  kind: TaskKind
+  title: string
+  description: string | null
+  status: TaskStatus
+  priority: TaskPriority
+  due_date: IsoDate | null
+  recurrence: Recurrence | null
+  recurrence_interval: number
+  created_at: IsoDateTime
+  updated_at: IsoDateTime
+}
+
+export interface ProjectTaskCreatePayload {
+  project_id: string
+  title: string
+  kind?: TaskKind
+  description?: string | null
+  status?: TaskStatus
+  priority?: TaskPriority
+  due_date?: IsoDate | null
+  recurrence?: Recurrence | null
+  recurrence_interval?: number
+}
+
+export type ProjectTaskUpdatePayload = Partial<Omit<ProjectTaskCreatePayload, 'project_id'>>

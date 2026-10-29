@@ -5,6 +5,12 @@ import type {
   Company,
   Digest,
   FollowUpItem,
+  Project,
+  ProjectPayload,
+  ProjectTask,
+  ProjectTaskCreatePayload,
+  ProjectTaskUpdatePayload,
+  TaskKind,
   RegisterPayload,
   Task,
   TaskComment,
@@ -105,6 +111,26 @@ export const clientsApi = {
   update: (id: string, data: ClientPayload) => api.put<Client>(`/clients/${id}`, data),
   archive: (id: string) => api.delete<void>(`/clients/${id}`),
   restore: (id: string) => api.post<Client>(`/clients/${id}/restore`),
+}
+
+// ─── Projets ────────────────────────────────────────────────────────────────
+export const projectsApi = {
+  getAll: (params?: { archived?: boolean }) => api.get<Project[]>('/projects/', { params }),
+  get: (id: string) => api.get<Project>(`/projects/${id}`),
+  create: (data: ProjectPayload & { name: string }) => api.post<Project>('/projects/', data),
+  update: (id: string, data: ProjectPayload) => api.put<Project>(`/projects/${id}`, data),
+  archive: (id: string) => api.delete<void>(`/projects/${id}`),
+  restore: (id: string) => api.post<Project>(`/projects/${id}/restore`),
+}
+
+export const projectTasksApi = {
+  list: (params: { project_id?: string; kind?: TaskKind; show_done?: boolean }) =>
+    api.get<ProjectTask[]>('/project-tasks/', { params }),
+  create: (data: ProjectTaskCreatePayload) => api.post<ProjectTask>('/project-tasks/', data),
+  update: (id: string, data: ProjectTaskUpdatePayload) => api.put<ProjectTask>(`/project-tasks/${id}`, data),
+  close: (id: string) => api.post<ProjectTask>(`/project-tasks/${id}/close`),
+  reopen: (id: string) => api.post<ProjectTask>(`/project-tasks/${id}/reopen`),
+  archive: (id: string) => api.delete<void>(`/project-tasks/${id}`),
 }
 
 // ─── Tasks ──────────────────────────────────────────────────────────────────
